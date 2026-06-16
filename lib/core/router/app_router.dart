@@ -6,6 +6,7 @@ import '../auth/token_storage.dart';
 import '../network/connectivity_probe.dart';
 import '../network/dio_client.dart';
 import '../widgets/placeholder_screen.dart';
+import '../widgets/ui_kit_demo_screen.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/data/services/auth_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -120,6 +121,10 @@ GoRouter createAppRouter({
       GoRoute(
         path: AppRoutes.profile,
         builder: (context, state) => const ProfilePlaceholderScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.uiKitDemo,
+        builder: (context, state) => const UiKitDemoScreen(),
       ),
     ],
   );

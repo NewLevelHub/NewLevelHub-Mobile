@@ -100,6 +100,10 @@ flutter analyze
 flutter test
 ```
 
+### UI Kit Demo
+
+В debug-сборке на главном экране доступна кнопка **UI Kit Demo** (`/ui-kit-demo`) — демонстрирует все компоненты дизайн-системы: кнопки, поля ввода, ошибки, загрузку и пустые состояния.
+
 ---
 
 ## Структура проекта
@@ -113,8 +117,8 @@ lib/
     network/                # HTTP-клиент (следующий тикет)
     auth/                   # JWT, сессия (следующий тикет)
     router/                 # Навигация (следующий тикет)
-    theme/                  # Тема приложения
-    widgets/                # Общие виджеты
+    theme/                  # AppTheme, AppColors, AppTextStyles
+    widgets/                # UI-kit: AppButton, AppTextField, AppLoader, …
   features/
     auth/                   # Экраны авторизации (следующий тикет)
     users/                  # Профиль пользователя (следующий тикет)

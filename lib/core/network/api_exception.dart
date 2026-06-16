@@ -15,6 +15,13 @@ class ApiException implements Exception {
   /// HTTP 401 — triggers token refresh / logout in the auth interceptor (MOB-006).
   bool get isUnauthorized => statusCode == 401;
 
+  /// First validation message for [fieldName], or null if none.
+  String? fieldError(String fieldName) {
+    final errors = fieldErrors?[fieldName];
+    if (errors == null || errors.isEmpty) return null;
+    return errors.first;
+  }
+
   @override
   String toString() =>
       'ApiException(code: $code, statusCode: $statusCode, message: $message)';
