@@ -11,11 +11,13 @@ class AuthPlaceholderScreen extends StatelessWidget {
     super.key,
     this.subtitle,
     this.queryToken,
+    this.queryEmail,
   });
 
   final String title;
   final String? subtitle;
   final String? queryToken;
+  final String? queryEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +60,17 @@ class AuthPlaceholderScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     'token: $token',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'monospace',
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                if (queryEmail != null && queryEmail!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'email: $queryEmail',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontFamily: 'monospace',
                       color: theme.colorScheme.onSurfaceVariant,

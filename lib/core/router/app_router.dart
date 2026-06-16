@@ -6,8 +6,12 @@ import '../auth/token_storage.dart';
 import '../network/connectivity_probe.dart';
 import '../network/dio_client.dart';
 import '../widgets/placeholder_screen.dart';
+import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/data/services/auth_service.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/auth_placeholder_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/auth/presentation/views/login_screen.dart';
 import '../../features/users/presentation/profile_placeholder_screen.dart';
 import 'app_routes.dart';
 import 'auth_notifier.dart';
@@ -17,11 +21,17 @@ GoRouter createAppRouter({
   required AuthNotifier authNotifier,
   TokenStorage? tokenStorage,
   AuthApi? authApi,
+  AuthRepository? authRepository,
   bool runConnectivityProbeOnStart = true,
   ConnectivityProbe? connectivityProbe,
 }) {
   final storage = tokenStorage ?? DioClient.instance.tokenStorage;
   final sessionApi = authApi ?? AuthApi(DioClient.instance.dio);
+  final repository = authRepository ??
+      AuthRepositoryImpl(
+        authService: AuthService(DioClient.instance.dio),
+        tokenStorage: storage,
+      );
 
   String? redirect(BuildContext context, GoRouterState state) {
     if (state.matchedLocation == AppRoutes.splash) {
@@ -57,9 +67,9 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const AuthPlaceholderScreen(
-          title: 'Вход',
-          subtitle: 'Экран входа в разработке',
+        builder: (context, state) => LoginScreen(
+          authRepository: repository,
+          authNotifier: authNotifier,
         ),
       ),
       GoRoute(
@@ -71,9 +81,10 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
-        builder: (context, state) => const AuthPlaceholderScreen(
+        builder: (context, state) => AuthPlaceholderScreen(
           title: 'Подтверждение email',
           subtitle: 'Ожидание подтверждения email',
+          queryEmail: state.uri.queryParameters['email'],
         ),
       ),
       GoRoute(

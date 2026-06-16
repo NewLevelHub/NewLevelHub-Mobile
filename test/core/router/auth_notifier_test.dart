@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:newlevelhub_mobile/core/auth/models/user.dart';
+import 'package:newlevelhub_mobile/core/auth/models/user_role.dart';
 import 'package:newlevelhub_mobile/core/router/app_routes.dart';
 import 'package:newlevelhub_mobile/core/router/auth_notifier.dart';
 
@@ -9,6 +11,29 @@ void main() {
     test('starts unauthenticated', () {
       final notifier = AuthNotifier();
       expect(notifier.isAuthenticated, isFalse);
+      expect(notifier.currentUser, isNull);
+    });
+
+    test('setAuthenticatedUser stores the user and marks authenticated', () {
+      final notifier = AuthNotifier();
+      final user = _user();
+      var notifications = 0;
+      notifier.addListener(() => notifications++);
+
+      notifier.setAuthenticatedUser(user);
+
+      expect(notifier.isAuthenticated, isTrue);
+      expect(notifier.currentUser, user);
+      expect(notifications, 1);
+    });
+
+    test('markUnauthenticated clears the stored user', () {
+      final notifier = AuthNotifier()..setAuthenticatedUser(_user());
+
+      notifier.markUnauthenticated();
+
+      expect(notifier.isAuthenticated, isFalse);
+      expect(notifier.currentUser, isNull);
     });
 
     test('markAuthenticated updates state and notifies listeners', () {
@@ -65,3 +90,14 @@ void main() {
     });
   });
 }
+
+User _user() => User(
+      id: 1,
+      email: 'user@example.com',
+      firstName: 'Анна',
+      lastName: 'Иванова',
+      fullName: 'Анна Иванова',
+      role: UserRole.employee,
+      isEmailVerified: true,
+      dateJoined: DateTime(2024, 1, 1),
+    );
