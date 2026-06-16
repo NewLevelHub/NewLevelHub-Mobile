@@ -1,10 +1,81 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
+import '../network/connectivity_probe.dart';
 
 /// Temporary home screen until feature modules are implemented.
-class PlaceholderScreen extends StatelessWidget {
-  const PlaceholderScreen({super.key});
+class PlaceholderScreen extends StatefulWidget {
+  const PlaceholderScreen({
+    super.key,
+    this.connectivityProbe,
+    this.runProbeOnStart = true,
+  });
+
+  final ConnectivityProbe? connectivityProbe;
+  final bool runProbeOnStart;
+
+  @override
+  State<PlaceholderScreen> createState() => _PlaceholderScreenState();
+}
+
+class _PlaceholderScreenState extends State<PlaceholderScreen> {
+  late final ConnectivityProbe _probe =
+      widget.connectivityProbe ?? ConnectivityProbe();
+  bool _isChecking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.runProbeOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _runConnectivityProbe());
+    }
+  }
+
+  Future<void> _runConnectivityProbe() async {
+    if (_isChecking) return;
+    setState(() => _isChecking = true);
+
+    final result = await _probe.run();
+
+    if (!mounted) return;
+    setState(() => _isChecking = false);
+    _showProbeResult(result);
+  }
+
+  void _showProbeResult(ConnectivityProbeResult result) {
+    final messenger = ScaffoldMessenger.of(context);
+
+    switch (result) {
+      case ConnectivityProbeOk():
+        if (kDebugMode) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('API доступен'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      case ConnectivityProbeHealthUnavailable():
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Сервис временно недоступен. Попробуйте позже.',
+            ),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      case ConnectivityProbePingFailed():
+        if (kDebugMode) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Не удалось связаться с API'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +85,19 @@ class PlaceholderScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(AppConfig.appName),
       ),
+      floatingActionButton: kDebugMode
+          ? FloatingActionButton.extended(
+              onPressed: _isChecking ? null : _runConnectivityProbe,
+              icon: _isChecking
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.wifi_find),
+              label: const Text('Проверить API'),
+            )
+          : null,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

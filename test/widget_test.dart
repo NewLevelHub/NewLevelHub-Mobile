@@ -4,7 +4,9 @@ import 'package:newlevelhub_mobile/app.dart';
 
 void main() {
   testWidgets('Placeholder screen is shown', (WidgetTester tester) async {
-    await tester.pumpWidget(const NewLevelHubApp());
+    await tester.pumpWidget(
+      const NewLevelHubApp(runConnectivityProbeOnStart: false),
+    );
 
     expect(find.text('New Level Hub'), findsWidgets);
     expect(find.text('Мобильное приложение в разработке'), findsOneWidget);
