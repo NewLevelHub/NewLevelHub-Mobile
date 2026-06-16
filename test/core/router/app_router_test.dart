@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:newlevelhub_mobile/core/auth/auth_api.dart';
+import 'package:newlevelhub_mobile/core/auth/models/user.dart';
 import 'package:newlevelhub_mobile/core/auth/token_storage.dart';
 import 'package:newlevelhub_mobile/core/router/app_router.dart';
 import 'package:newlevelhub_mobile/core/router/app_routes.dart';
 import 'package:newlevelhub_mobile/core/router/auth_notifier.dart';
+import 'package:newlevelhub_mobile/features/auth/domain/repositories/auth_repository.dart';
 
 void main() {
   group('createAppRouter', () {
@@ -133,6 +135,43 @@ void main() {
       expect(router.state.uri.queryParameters['token'], 'invite-abc');
     });
 
+    testWidgets('routes /verify-email?token=... to the deep link confirmation screen', (tester) async {
+      final router = createAppRouter(
+        authNotifier: authNotifier,
+        tokenStorage: tokenStorage,
+        authApi: authApi,
+        // Avoids a real network call from EmailVerifyLinkScreen.initState.
+        authRepository: _FakeAuthRepository(),
+        runConnectivityProbeOnStart: false,
+      );
+      authNotifier.attachRouter(router);
+
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      router.go('${AppRoutes.verifyEmail}?token=link-token');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Подтверждение email'), findsOneWidget);
+      // Distinct from the "check your inbox" waiting screen, which would
+      // render the resend button instead.
+      expect(find.text('Отправить письмо повторно'), findsNothing);
+    });
+
+    testWidgets('routes /verify-email?email=... to the waiting-for-confirmation screen', (tester) async {
+      final router = createAppRouter(
+        authNotifier: authNotifier,
+        tokenStorage: tokenStorage,
+        authApi: authApi,
+        runConnectivityProbeOnStart: false,
+      );
+      authNotifier.attachRouter(router);
+
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      router.go('${AppRoutes.verifyEmail}?email=user@example.com');
+      await tester.pumpAndSettle();
+
+      expect(find.text('user@example.com'), findsOneWidget);
+    });
+
     testWidgets('preserves reset-password token query parameter', (tester) async {
       final router = createAppRouter(
         authNotifier: authNotifier,
@@ -169,6 +208,31 @@ class _FakeAuthApi implements AuthApi {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Used only by the `/verify-email?token=...` routing test, to keep
+/// `EmailVerifyLinkScreen`'s `initState` verify call off the real network.
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  Future<User> login({
+    required String email,
+    required String password,
+    required bool rememberMe,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> hasActiveSession() async => false;
+
+  @override
+  Future<void> resendVerificationEmail() async {}
+
+  @override
+  Future<void> verifyEmailToken(String token) async {}
+
+  @override
+  Future<void> logout() async {}
 }
 
 class _InMemoryStore implements SecureKeyValueStore {

@@ -150,6 +150,60 @@ void main() {
       );
     });
   });
+
+  group('AuthService.verifyEmail', () {
+    test('gets /auth/email/verify/ with the token query parameter', () async {
+      adapter.enqueue(_jsonResponse(200, {'detail': 'Email подтверждён'}));
+
+      await service.verifyEmail('a-token');
+
+      expect(adapter.lastPath, '/api/v1/auth/email/verify/');
+    });
+
+    test('throws ApiException(404) when the token does not exist', () async {
+      adapter.enqueue(_jsonResponse(404, {
+        'success': false,
+        'error': {
+          'code': 'NOT_FOUND',
+          'message': 'Объект не найден.',
+          'details': {},
+        },
+      }));
+
+      await expectLater(
+        service.verifyEmail('missing-token'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 404),
+        ),
+      );
+    });
+
+    test('throws ApiException(400) with the plain detail message when already used', () async {
+      adapter.enqueue(_jsonResponse(400, {'detail': 'Токен уже использован.'}));
+
+      await expectLater(
+        service.verifyEmail('used-token'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having((e) => e.message, 'message', 'Токен уже использован.'),
+        ),
+      );
+    });
+
+    test('throws ApiException(400) with the plain detail message when expired', () async {
+      adapter.enqueue(_jsonResponse(400, {'detail': 'Токен истёк.'}));
+
+      await expectLater(
+        service.verifyEmail('expired-token'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having((e) => e.message, 'message', 'Токен истёк.'),
+        ),
+      );
+    });
+  });
 }
 
 Map<String, dynamic> _userJson() => {

@@ -90,12 +90,18 @@ class _PlaceholderScreenState extends State<PlaceholderScreen> {
       appBar: AppBar(
         title: const Text(AppConfig.appName),
         actions: [
-          if (kDebugMode)
+          if (kDebugMode) ...[
             IconButton(
               icon: const Icon(Icons.palette_outlined),
               tooltip: 'UI Kit Demo',
               onPressed: () => context.push(AppRoutes.uiKitDemo),
             ),
+            IconButton(
+              icon: const Icon(Icons.bug_report_outlined),
+              tooltip: 'Debug: токен подтверждения email',
+              onPressed: () => context.push(AppRoutes.debugVerifyEmailToken),
+            ),
+          ],
         ],
       ),
       floatingActionButton: kDebugMode

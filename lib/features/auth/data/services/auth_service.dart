@@ -57,4 +57,24 @@ class AuthService {
       throw ErrorParser.parse(e);
     }
   }
+
+  /// `GET /auth/email/verify/?token=...` — public, no Bearer required (see
+  /// `AuthInterceptor.publicPaths`). Only the status matters to the caller;
+  /// the response body is a `{detail}` message on success.
+  ///
+  /// On failure: 404 when the token doesn't exist (envelope error, code
+  /// `NOT_FOUND`); 400 with a plain `{detail}` message (no error `code`) when
+  /// the token was already used or has expired — the backend doesn't attach
+  /// `TOKEN_ALREADY_USED`/`TOKEN_EXPIRED` here unlike other token endpoints,
+  /// see `EmailVerifyLinkViewModel` for how the message text is matched.
+  Future<void> verifyEmail(String token) async {
+    try {
+      await _dio.get<Map<String, dynamic>>(
+        '/auth/email/verify/',
+        queryParameters: <String, dynamic>{'token': token},
+      );
+    } on DioException catch (e) {
+      throw ErrorParser.parse(e);
+    }
+  }
 }

@@ -44,5 +44,9 @@ class AuthRepositoryImpl implements AuthRepository {
       _authService.resendVerificationEmail();
 
   @override
+  Future<void> verifyEmailToken(String token) =>
+      _authService.verifyEmail(token);
+
+  @override
   Future<void> logout() => _tokenStorage.clearTokens();
 }

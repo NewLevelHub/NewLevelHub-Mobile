@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -136,6 +137,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => context.go(AppRoutes.register),
                     child: const Text(AuthStrings.noAccount),
                   ),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 24),
+                    TextButton(
+                      onPressed: () =>
+                          context.push(AppRoutes.debugVerifyEmailToken),
+                      child: const Text('Debug: токен подтверждения email'),
+                    ),
+                  ],
                 ],
               ),
             );

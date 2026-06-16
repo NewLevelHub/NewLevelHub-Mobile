@@ -26,6 +26,21 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="newlevelhub"/>
             </intent-filter>
+            <!-- App Links — requires assetlinks.json published at
+                 https://newlevelhub.kz/.well-known/assetlinks.json (backend
+                 deploy, not part of this repo) for autoVerify to pass; until
+                 then Android falls back to the disambiguation dialog instead
+                 of opening the app directly. See README → "Тестирование
+                 deep link". -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="https"
+                    android:host="newlevelhub.kz"
+                    android:pathPrefix="/verify-email"/>
+            </intent-filter>
         </activity>
         <meta-data
             android:name="flutterEmbedding"
