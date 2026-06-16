@@ -1,0 +1,38 @@
+import '../../../../core/auth/models/user.dart';
+import '../../../../core/auth/token_storage.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../services/auth_service.dart';
+
+/// Default [AuthRepository]: calls [AuthService], persists the returned
+/// tokens via [TokenStorage], and hands the clean [User] domain model up —
+/// callers never see the raw login response or token pair.
+class AuthRepositoryImpl implements AuthRepository {
+  AuthRepositoryImpl({
+    required AuthService authService,
+    required TokenStorage tokenStorage,
+  })  : _authService = authService,
+        _tokenStorage = tokenStorage;
+
+  final AuthService _authService;
+  final TokenStorage _tokenStorage;
+
+  @override
+  Future<User> login({
+    required String email,
+    required String password,
+    required bool rememberMe,
+  }) async {
+    final result = await _authService.login(
+      email: email,
+      password: password,
+      rememberMe: rememberMe,
+    );
+
+    await _tokenStorage.saveTokens(
+      access: result.tokens.access,
+      refresh: result.tokens.refresh,
+    );
+
+    return result.user;
+  }
+}

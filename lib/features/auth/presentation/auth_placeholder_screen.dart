@@ -17,12 +17,14 @@ class AuthPlaceholderScreen extends StatefulWidget {
     super.key,
     this.subtitle,
     this.queryToken,
+    this.queryEmail,
     this.showFormDemo = false,
   });
 
   final String title;
   final String? subtitle;
   final String? queryToken;
+  final String? queryEmail;
   final bool showFormDemo;
 
   @override
@@ -85,6 +87,16 @@ class _AuthPlaceholderScreenState extends State<AuthPlaceholderScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'token: $token',
+                  style: AppTextStyles.caption(context).copyWith(
+                    fontFamily: 'monospace',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              if (widget.queryEmail != null && widget.queryEmail!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'email: ${widget.queryEmail}',
                   style: AppTextStyles.caption(context).copyWith(
                     fontFamily: 'monospace',
                   ),
