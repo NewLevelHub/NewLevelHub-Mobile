@@ -2,25 +2,32 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
+import '../auth/token_refresher.dart';
 import '../auth/token_storage.dart';
-import 'error_parser.dart';
 
 /// Injects `Authorization: Bearer <access>` and refreshes tokens on 401.
 ///
-/// See `mobile_api.md` → «Рекомендуемый flow».
+/// See `mobile_api.md` → «Рекомендуемый flow». The actual refresh exchange
+/// lives in [TokenRefresher] — shared with `AuthRepository.refresh()` so the
+/// token-refresh logic itself is implemented exactly once.
 class AuthInterceptor extends Interceptor {
   AuthInterceptor({
     required this.tokenStorage,
     required this.onSessionExpired,
     required Dio dio,
     Dio? refreshDio,
+    TokenRefresher? tokenRefresher,
   })  : _dio = dio,
-        _refreshDio = refreshDio ?? _createRefreshClient(dio);
+        _tokenRefresher = tokenRefresher ??
+            TokenRefresher(
+              dio: refreshDio ?? _createRefreshClient(dio),
+              tokenStorage: tokenStorage,
+            );
 
   final TokenStorage tokenStorage;
   final void Function() onSessionExpired;
   final Dio _dio;
-  final Dio _refreshDio;
+  final TokenRefresher _tokenRefresher;
 
   static Dio _createRefreshClient(Dio dio) {
     return Dio(
@@ -48,13 +55,6 @@ class AuthInterceptor extends Interceptor {
     '/ping/',
     '/health/',
   };
-
-  static const _sessionExpiredCodes = <String>{
-    'SESSION_IDLE_TIMEOUT',
-    'SESSION_ABSOLUTE_TIMEOUT',
-  };
-
-  Future<String?>? _refreshFuture;
 
   static bool isPublicPath(String path) {
     final normalized = _normalizePath(path);
@@ -135,57 +135,7 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
-  Future<String?> _obtainFreshAccessToken() {
-    return _refreshFuture ??= _performRefresh().whenComplete(() {
-      _refreshFuture = null;
-    });
-  }
-
-  Future<String?> _performRefresh() async {
-    final refresh = await tokenStorage.getRefreshToken();
-    if (refresh == null || refresh.isEmpty) {
-      return null;
-    }
-
-    try {
-      final response = await _refreshDio.post<Map<String, dynamic>>(
-        '/auth/token/refresh/',
-        data: <String, dynamic>{'refresh': refresh},
-      );
-
-      final data = response.data;
-      if (data == null) {
-        return null;
-      }
-
-      final access = data['access']?.toString();
-      final newRefresh = data['refresh']?.toString();
-      if (access == null ||
-          access.isEmpty ||
-          newRefresh == null ||
-          newRefresh.isEmpty) {
-        return null;
-      }
-
-      await tokenStorage.saveTokens(access: access, refresh: newRefresh);
-      return access;
-    } on DioException catch (error) {
-      if (_shouldExpireSession(error)) {
-        return null;
-      }
-      rethrow;
-    }
-  }
-
-  bool _shouldExpireSession(DioException error) {
-    if (error.response?.statusCode == 401) {
-      return true;
-    }
-
-    final apiError = ErrorParser.parse(error);
-    final code = apiError.code;
-    return code != null && _sessionExpiredCodes.contains(code);
-  }
+  Future<String?> _obtainFreshAccessToken() => _tokenRefresher.refresh();
 
   Future<void> _handleSessionExpired() async {
     await tokenStorage.clearTokens();

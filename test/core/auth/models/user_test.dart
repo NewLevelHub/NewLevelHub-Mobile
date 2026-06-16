@@ -17,7 +17,11 @@ void main() {
         'position': 'Менеджер',
         'avatar': '/media/avatars/1.jpg',
         'role': 'company_admin',
-        'company': {'id': 10, 'name': 'Acme Coworking'},
+        'company': {
+          'id': 10,
+          'name': 'Acme Coworking',
+          'onboarding_completed': true,
+        },
         'is_email_verified': true,
         'date_joined': '2024-01-01T00:00:00Z',
       });
@@ -28,9 +32,40 @@ void main() {
       expect(user.lastName, 'Иванова');
       expect(user.fullName, 'Анна Иванова');
       expect(user.role, UserRole.companyAdmin);
-      expect(user.company, const CompanyBrief(id: 10, name: 'Acme Coworking'));
+      expect(
+        user.company,
+        const CompanyBrief(
+          id: 10,
+          name: 'Acme Coworking',
+          onboardingCompleted: true,
+        ),
+      );
       expect(user.isEmailVerified, isTrue);
       expect(user.dateJoined, DateTime.parse('2024-01-01T00:00:00Z'));
+    });
+
+    test('parses an employee payload with a company, including onboarding_completed', () {
+      final user = User.fromJson({
+        'id': 3,
+        'email': 'employee@example.com',
+        'first_name': 'Пётр',
+        'last_name': 'Сидоров',
+        'full_name': 'Пётр Сидоров',
+        'role': 'employee',
+        'company': {
+          'id': 5,
+          'name': 'Beta Coworking',
+          'onboarding_completed': false,
+        },
+        'is_email_verified': true,
+        'date_joined': '2024-03-01T00:00:00Z',
+      });
+
+      expect(user.role, UserRole.employee);
+      expect(user.company, isNotNull);
+      expect(user.company!.id, 5);
+      expect(user.company!.name, 'Beta Coworking');
+      expect(user.company!.onboardingCompleted, isFalse);
     });
 
     test('parses a guest payload with null company and optional fields', () {
@@ -78,6 +113,8 @@ void main() {
       expect(User.fromJson(_userJson(role: 'superadmin')).role, UserRole.superadmin);
       expect(User.fromJson(_userJson(role: 'company_admin')).role, UserRole.companyAdmin);
       expect(User.fromJson(_userJson(role: 'employee')).role, UserRole.employee);
+      expect(User.fromJson(_userJson(role: 'reception')).role, UserRole.reception);
+      expect(User.fromJson(_userJson(role: 'service_manager')).role, UserRole.serviceManager);
       expect(User.fromJson(_userJson(role: 'guest')).role, UserRole.guest);
     });
   });

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
-import '../../../../core/router/auth_notifier.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_error_banner.dart';
 import '../../../../core/widgets/app_loader.dart';
+import '../../application/auth_controller.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../auth_strings.dart';
 import '../view_models/verify_email_resend_result.dart';
@@ -23,13 +23,13 @@ class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({
     required this.email,
     required this.authRepository,
-    required this.authNotifier,
+    required this.authController,
     super.key,
   });
 
   final String email;
   final AuthRepository authRepository;
-  final AuthNotifier authNotifier;
+  final AuthController authController;
 
   @override
   State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -38,7 +38,7 @@ class VerifyEmailScreen extends StatefulWidget {
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late final VerifyEmailViewModel _viewModel = VerifyEmailViewModel(
     authRepository: widget.authRepository,
-    authNotifier: widget.authNotifier,
+    authController: widget.authController,
     email: widget.email,
   );
 

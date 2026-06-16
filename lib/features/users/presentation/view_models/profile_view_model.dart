@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../../core/router/auth_notifier.dart';
+import '../../../auth/application/auth_controller.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 
 /// Drives the profile screen. Currently only logout — extend with profile
@@ -11,12 +11,12 @@ import '../../../auth/domain/repositories/auth_repository.dart';
 class ProfileViewModel extends ChangeNotifier {
   ProfileViewModel({
     required AuthRepository authRepository,
-    required AuthNotifier authNotifier,
+    required AuthController authController,
   })  : _authRepository = authRepository,
-        _authNotifier = authNotifier;
+        _authController = authController;
 
   final AuthRepository _authRepository;
-  final AuthNotifier _authNotifier;
+  final AuthController _authController;
 
   bool _isLoggingOut = false;
 
@@ -38,7 +38,7 @@ class ProfileViewModel extends ChangeNotifier {
     } catch (_) {
       // Local teardown below still happens regardless.
     } finally {
-      _authNotifier.markUnauthenticated();
+      _authController.markUnauthenticated();
       _isLoggingOut = false;
       notifyListeners();
     }

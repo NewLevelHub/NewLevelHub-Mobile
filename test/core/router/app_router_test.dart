@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:newlevelhub_mobile/core/auth/auth_api.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user.dart';
-import 'package:newlevelhub_mobile/core/auth/token_storage.dart';
+import 'package:newlevelhub_mobile/core/auth/models/user_role.dart';
+import 'package:newlevelhub_mobile/core/network/api_exception.dart';
 import 'package:newlevelhub_mobile/core/router/app_router.dart';
 import 'package:newlevelhub_mobile/core/router/app_routes.dart';
-import 'package:newlevelhub_mobile/core/router/auth_notifier.dart';
+import 'package:newlevelhub_mobile/features/auth/application/auth_controller.dart';
 import 'package:newlevelhub_mobile/features/auth/domain/repositories/auth_repository.dart';
 
 void main() {
   group('createAppRouter', () {
-    late AuthNotifier authNotifier;
-    late _FakeTokenStorage tokenStorage;
-    late _FakeAuthApi authApi;
+    late _FakeAuthRepository repository;
+    late AuthController authController;
 
     setUp(() {
-      authNotifier = AuthNotifier();
-      tokenStorage = _FakeTokenStorage();
-      authApi = _FakeAuthApi();
+      repository = _FakeAuthRepository();
+      authController = AuthController(authRepository: repository);
     });
 
     Widget buildTestApp() {
       final router = createAppRouter(
-        authNotifier: authNotifier,
-        tokenStorage: tokenStorage,
-        authApi: authApi,
+        authController: authController,
+        authRepository: repository,
         runConnectivityProbeOnStart: false,
       );
-      authNotifier.attachRouter(router);
+      authController.attachRouter(router);
 
       return MaterialApp.router(routerConfig: router);
     }
@@ -40,19 +37,19 @@ void main() {
     });
 
     testWidgets('redirects to login when no tokens', (tester) async {
-      tokenStorage.hasTokensResult = false;
+      repository.hasActiveSessionResult = false;
 
       await tester.pumpWidget(buildTestApp());
       await tester.pump();
       await tester.pumpAndSettle();
 
       expect(find.text('Вход'), findsWidgets);
-      expect(authNotifier.isAuthenticated, isFalse);
+      expect(authController.isAuthenticated, isFalse);
     });
 
     testWidgets('redirects to home when session is valid', (tester) async {
-      tokenStorage.hasTokensResult = true;
-      authApi.validateSessionResult = true;
+      repository.hasActiveSessionResult = true;
+      repository.fetchMeResult = _user();
 
       await tester.pumpWidget(buildTestApp());
       await tester.pump();
@@ -62,12 +59,12 @@ void main() {
         find.text('Мобильное приложение в разработке'),
         findsOneWidget,
       );
-      expect(authNotifier.isAuthenticated, isTrue);
+      expect(authController.isAuthenticated, isTrue);
     });
 
     testWidgets('the profile icon on home navigates to /profile', (tester) async {
-      tokenStorage.hasTokensResult = true;
-      authApi.validateSessionResult = true;
+      repository.hasActiveSessionResult = true;
+      repository.fetchMeResult = _user();
 
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
@@ -80,25 +77,28 @@ void main() {
     });
 
     testWidgets('redirects to login when session is invalid', (tester) async {
-      tokenStorage.hasTokensResult = true;
-      authApi.validateSessionResult = false;
+      repository.hasActiveSessionResult = true;
+      repository.fetchMeException = const ApiException(
+        code: 'UNAUTHENTICATED',
+        message: 'Требуется авторизация',
+        statusCode: 401,
+      );
 
       await tester.pumpWidget(buildTestApp());
       await tester.pump();
       await tester.pumpAndSettle();
 
       expect(find.text('Вход'), findsWidgets);
-      expect(authNotifier.isAuthenticated, isFalse);
+      expect(authController.isAuthenticated, isFalse);
     });
 
     testWidgets('blocks profile without auth', (tester) async {
       final router = createAppRouter(
-        authNotifier: authNotifier,
-        tokenStorage: tokenStorage,
-        authApi: authApi,
+        authController: authController,
+        authRepository: repository,
         runConnectivityProbeOnStart: false,
       );
-      authNotifier.attachRouter(router);
+      authController.attachRouter(router);
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       router.go(AppRoutes.profile);
@@ -109,21 +109,20 @@ void main() {
     });
 
     testWidgets('redirects authenticated user away from login', (tester) async {
-      tokenStorage.hasTokensResult = true;
-      authApi.validateSessionResult = true;
+      repository.hasActiveSessionResult = true;
+      repository.fetchMeResult = _user();
 
       final router = createAppRouter(
-        authNotifier: authNotifier,
-        tokenStorage: tokenStorage,
-        authApi: authApi,
+        authController: authController,
+        authRepository: repository,
         runConnectivityProbeOnStart: false,
       );
-      authNotifier.attachRouter(router);
+      authController.attachRouter(router);
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pumpAndSettle();
 
-      expect(authNotifier.isAuthenticated, isTrue);
+      expect(authController.isAuthenticated, isTrue);
       expect(router.state.matchedLocation, AppRoutes.home);
 
       router.go(AppRoutes.login);
@@ -134,12 +133,11 @@ void main() {
 
     testWidgets('preserves invite token query parameter', (tester) async {
       final router = createAppRouter(
-        authNotifier: authNotifier,
-        tokenStorage: tokenStorage,
-        authApi: authApi,
+        authController: authController,
+        authRepository: repository,
         runConnectivityProbeOnStart: false,
       );
-      authNotifier.attachRouter(router);
+      authController.attachRouter(router);
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       router.go('${AppRoutes.invite}?token=invite-abc');
@@ -151,14 +149,12 @@ void main() {
 
     testWidgets('routes /verify-email?token=... to the deep link confirmation screen', (tester) async {
       final router = createAppRouter(
-        authNotifier: authNotifier,
-        tokenStorage: tokenStorage,
-        authApi: authApi,
+        authController: authController,
         // Avoids a real network call from EmailVerifyLinkScreen.initState.
-        authRepository: _FakeAuthRepository(),
+        authRepository: repository,
         runConnectivityProbeOnStart: false,
       );
-      authNotifier.attachRouter(router);
+      authController.attachRouter(router);
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       router.go('${AppRoutes.verifyEmail}?token=link-token');
@@ -172,12 +168,11 @@ void main() {
 
     testWidgets('routes /verify-email?email=... to the waiting-for-confirmation screen', (tester) async {
       final router = createAppRouter(
-        authNotifier: authNotifier,
-        tokenStorage: tokenStorage,
-        authApi: authApi,
+        authController: authController,
+        authRepository: repository,
         runConnectivityProbeOnStart: false,
       );
-      authNotifier.attachRouter(router);
+      authController.attachRouter(router);
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       router.go('${AppRoutes.verifyEmail}?email=user@example.com');
@@ -188,12 +183,11 @@ void main() {
 
     testWidgets('preserves reset-password token query parameter', (tester) async {
       final router = createAppRouter(
-        authNotifier: authNotifier,
-        tokenStorage: tokenStorage,
-        authApi: authApi,
+        authController: authController,
+        authRepository: repository,
         runConnectivityProbeOnStart: false,
       );
-      authNotifier.attachRouter(router);
+      authController.attachRouter(router);
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       router.go('${AppRoutes.resetPassword}?token=reset-xyz');
@@ -205,28 +199,25 @@ void main() {
   });
 }
 
-class _FakeTokenStorage extends TokenStorage {
-  _FakeTokenStorage() : super(store: _InMemoryStore());
+User _user() => User(
+      id: 1,
+      email: 'user@example.com',
+      firstName: 'Анна',
+      lastName: 'Иванова',
+      fullName: 'Анна Иванова',
+      role: UserRole.employee,
+      isEmailVerified: true,
+      dateJoined: DateTime(2024, 1, 1),
+    );
 
-  bool hasTokensResult = false;
-
-  @override
-  Future<bool> hasTokens() async => hasTokensResult;
-}
-
-class _FakeAuthApi implements AuthApi {
-  bool validateSessionResult = false;
-
-  @override
-  Future<bool> validateSession() async => validateSessionResult;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-/// Used only by the `/verify-email?token=...` routing test, to keep
-/// `EmailVerifyLinkScreen`'s `initState` verify call off the real network.
+/// Used by the splash-flow tests (cold-start bootstrap) and by the
+/// `/verify-email?token=...` routing test, to keep `EmailVerifyLinkScreen`'s
+/// `initState` verify call off the real network.
 class _FakeAuthRepository implements AuthRepository {
+  bool hasActiveSessionResult = false;
+  User? fetchMeResult;
+  Object? fetchMeException;
+
   @override
   Future<User> login({
     required String email,
@@ -237,7 +228,30 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<bool> hasActiveSession() async => false;
+  Future<User> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    required String password,
+    required String passwordConfirm,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<User> fetchMe() async {
+    if (fetchMeException != null) {
+      throw fetchMeException!;
+    }
+    return fetchMeResult!;
+  }
+
+  @override
+  Future<bool> refresh() => throw UnimplementedError();
+
+  @override
+  Future<bool> hasActiveSession() async => hasActiveSessionResult;
 
   @override
   Future<void> resendVerificationEmail() async {}
@@ -247,25 +261,4 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {}
-}
-
-class _InMemoryStore implements SecureKeyValueStore {
-  final _data = <String, String>{};
-
-  @override
-  Future<void> delete({required String key}) async {
-    _data.remove(key);
-  }
-
-  @override
-  Future<String?> read({required String key}) async => _data[key];
-
-  @override
-  Future<void> write({required String key, required String? value}) async {
-    if (value == null) {
-      _data.remove(key);
-    } else {
-      _data[key] = value;
-    }
-  }
 }

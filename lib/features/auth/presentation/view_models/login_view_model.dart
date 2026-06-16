@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/router/auth_notifier.dart';
+import '../../application/auth_controller.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../auth_strings.dart';
 import 'login_submit_result.dart';
@@ -12,12 +12,12 @@ import 'login_submit_result.dart';
 class LoginViewModel extends ChangeNotifier {
   LoginViewModel({
     required AuthRepository authRepository,
-    required AuthNotifier authNotifier,
+    required AuthController authController,
   })  : _authRepository = authRepository,
-        _authNotifier = authNotifier;
+        _authController = authController;
 
   final AuthRepository _authRepository;
-  final AuthNotifier _authNotifier;
+  final AuthController _authController;
 
   static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
@@ -80,7 +80,7 @@ class LoginViewModel extends ChangeNotifier {
         password: _password,
         rememberMe: _rememberMe,
       );
-      _authNotifier.setAuthenticatedUser(user);
+      _authController.setAuthenticatedUser(user);
       return const LoginSubmitSuccess();
     } on EmailNotVerifiedException {
       return LoginSubmitEmailNotVerified(trimmedEmail);

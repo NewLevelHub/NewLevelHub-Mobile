@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/auth/auth_api.dart';
-import '../../../core/auth/token_storage.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/router/app_routes.dart';
-import '../../../core/router/auth_notifier.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_loader.dart';
+import '../application/auth_controller.dart';
 
-/// Validates stored tokens on cold start and routes to auth or main flow.
+/// Resolves the initial route on cold start: [AuthController.bootstrap]
+/// checks for local tokens and, if present, loads the profile via
+/// `GET /auth/me/` — then this screen routes to `/home` or `/login`.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({
-    required this.tokenStorage,
-    required this.authApi,
-    required this.authNotifier,
+    required this.authController,
     super.key,
   });
 
-  final TokenStorage tokenStorage;
-  final AuthApi authApi;
-  final AuthNotifier authNotifier;
+  final AuthController authController;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -37,31 +33,14 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _resolveInitialRoute() async {
     if (!mounted) return;
 
-    try {
-      final hasTokens = await widget.tokenStorage.hasTokens();
-      if (!hasTokens) {
-        _goToLogin();
-        return;
-      }
+    await widget.authController.bootstrap();
+    if (!mounted) return;
 
-      final isValid = await widget.authApi.validateSession();
-      if (!mounted) return;
-
-      if (isValid) {
-        widget.authNotifier.markAuthenticated();
-        context.go(AppRoutes.home);
-      } else {
-        _goToLogin();
-      }
-    } catch (_) {
-      if (!mounted) return;
-      _goToLogin();
-    }
-  }
-
-  void _goToLogin() {
-    widget.authNotifier.markUnauthenticated();
-    context.go(AppRoutes.login);
+    context.go(
+      widget.authController.isAuthenticated
+          ? AppRoutes.home
+          : AppRoutes.login,
+    );
   }
 
   @override

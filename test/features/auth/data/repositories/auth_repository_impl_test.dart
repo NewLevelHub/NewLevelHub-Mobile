@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:newlevelhub_mobile/core/auth/models/auth_tokens.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user_role.dart';
+import 'package:newlevelhub_mobile/core/auth/token_refresher.dart';
 import 'package:newlevelhub_mobile/core/auth/token_storage.dart';
 import 'package:newlevelhub_mobile/core/network/api_exception.dart';
 import 'package:newlevelhub_mobile/features/auth/data/repositories/auth_repository_impl.dart';
@@ -64,6 +65,96 @@ void main() {
         throwsException,
       );
 
+      expect(await tokenStorage.hasTokens(), isFalse);
+    });
+  });
+
+  group('AuthRepositoryImpl.register', () {
+    test('persists the returned tokens and returns the domain User', () async {
+      final authService = _FakeAuthService();
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: tokenStorage,
+      );
+
+      final user = await repository.register(
+        email: 'new@example.com',
+        firstName: 'Анна',
+        lastName: 'Иванова',
+        password: 'SecurePass123!',
+        passwordConfirm: 'SecurePass123!',
+      );
+
+      expect(user, authService.userToReturn);
+      expect(await tokenStorage.getAccessToken(), 'fake-access');
+      expect(await tokenStorage.getRefreshToken(), 'fake-refresh');
+    });
+
+    test('propagates exceptions from the service without persisting tokens', () async {
+      final authService = _FakeAuthService()..exceptionToThrow = Exception('boom');
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: tokenStorage,
+      );
+
+      await expectLater(
+        repository.register(
+          email: 'new@example.com',
+          firstName: 'Анна',
+          lastName: 'Иванова',
+          password: 'pw',
+          passwordConfirm: 'pw',
+        ),
+        throwsException,
+      );
+
+      expect(await tokenStorage.hasTokens(), isFalse);
+    });
+  });
+
+  group('AuthRepositoryImpl.fetchMe', () {
+    test('delegates to AuthService and returns the domain User', () async {
+      final authService = _FakeAuthService();
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: TokenStorage(store: _InMemoryStore()),
+      );
+
+      final user = await repository.fetchMe();
+
+      expect(user, authService.userToReturn);
+    });
+  });
+
+  group('AuthRepositoryImpl.refresh', () {
+    test('returns true and keeps the new tokens when TokenRefresher succeeds', () async {
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      await tokenStorage.saveTokens(access: 'old-access', refresh: 'old-refresh');
+      final repository = AuthRepositoryImpl(
+        authService: _FakeAuthService(),
+        tokenStorage: tokenStorage,
+        tokenRefresher: _FakeTokenRefresher(accessToReturn: 'new-access'),
+      );
+
+      final result = await repository.refresh();
+
+      expect(result, isTrue);
+    });
+
+    test('returns false and clears local tokens when TokenRefresher fails', () async {
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      await tokenStorage.saveTokens(access: 'old-access', refresh: 'old-refresh');
+      final repository = AuthRepositoryImpl(
+        authService: _FakeAuthService(),
+        tokenStorage: tokenStorage,
+        tokenRefresher: _FakeTokenRefresher(accessToReturn: null),
+      );
+
+      final result = await repository.refresh();
+
+      expect(result, isFalse);
       expect(await tokenStorage.hasTokens(), isFalse);
     });
   });
@@ -271,6 +362,31 @@ class _FakeAuthService extends AuthService {
   }
 
   @override
+  Future<RegisterResponse> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    required String password,
+    required String passwordConfirm,
+  }) async {
+    if (exceptionToThrow != null) {
+      throw exceptionToThrow!;
+    }
+
+    return RegisterResponse(user: userToReturn, tokens: tokensToReturn);
+  }
+
+  @override
+  Future<User> fetchMe() async {
+    if (exceptionToThrow != null) {
+      throw exceptionToThrow!;
+    }
+
+    return userToReturn;
+  }
+
+  @override
   Future<void> resendVerificationEmail() async {
     resendCalls++;
     if (exceptionToThrow != null) {
@@ -295,6 +411,16 @@ class _FakeAuthService extends AuthService {
       throw exceptionToThrow!;
     }
   }
+}
+
+class _FakeTokenRefresher extends TokenRefresher {
+  _FakeTokenRefresher({required this.accessToReturn})
+      : super(dio: Dio(), tokenStorage: TokenStorage(store: _InMemoryStore()));
+
+  final String? accessToReturn;
+
+  @override
+  Future<String?> refresh() async => accessToReturn;
 }
 
 class _InMemoryStore implements SecureKeyValueStore {

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../auth/auth_api.dart';
 import '../auth/token_storage.dart';
 import '../network/connectivity_probe.dart';
 import '../network/dio_client.dart';
 import '../widgets/placeholder_screen.dart';
 import '../widgets/ui_kit_demo_screen.dart';
+import '../../features/auth/application/auth_controller.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/data/services/auth_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -18,19 +18,16 @@ import '../../features/auth/presentation/views/login_screen.dart';
 import '../../features/auth/presentation/views/verify_email_screen.dart';
 import '../../features/users/presentation/profile_placeholder_screen.dart';
 import 'app_routes.dart';
-import 'auth_notifier.dart';
 
 /// Creates the application [GoRouter] with auth / main flow separation.
 GoRouter createAppRouter({
-  required AuthNotifier authNotifier,
+  required AuthController authController,
   TokenStorage? tokenStorage,
-  AuthApi? authApi,
   AuthRepository? authRepository,
   bool runConnectivityProbeOnStart = true,
   ConnectivityProbe? connectivityProbe,
 }) {
   final storage = tokenStorage ?? DioClient.instance.tokenStorage;
-  final sessionApi = authApi ?? AuthApi(DioClient.instance.dio);
   final repository = authRepository ??
       AuthRepositoryImpl(
         authService: AuthService(DioClient.instance.dio),
@@ -42,7 +39,7 @@ GoRouter createAppRouter({
       return null;
     }
 
-    final isAuth = authNotifier.isAuthenticated;
+    final isAuth = authController.isAuthenticated;
     final location = state.matchedLocation;
 
     if (AppRoutes.authRequired.contains(location) && !isAuth) {
@@ -58,22 +55,20 @@ GoRouter createAppRouter({
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
-    refreshListenable: authNotifier,
+    refreshListenable: authController,
     redirect: redirect,
     routes: [
       GoRoute(
         path: AppRoutes.splash,
         builder: (context, state) => SplashScreen(
-          tokenStorage: storage,
-          authApi: sessionApi,
-          authNotifier: authNotifier,
+          authController: authController,
         ),
       ),
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => LoginScreen(
           authRepository: repository,
-          authNotifier: authNotifier,
+          authController: authController,
         ),
       ),
       GoRoute(
@@ -99,7 +94,7 @@ GoRouter createAppRouter({
           return VerifyEmailScreen(
             email: state.uri.queryParameters['email'] ?? '',
             authRepository: repository,
-            authNotifier: authNotifier,
+            authController: authController,
           );
         },
       ),
@@ -137,7 +132,7 @@ GoRouter createAppRouter({
         path: AppRoutes.profile,
         builder: (context, state) => ProfilePlaceholderScreen(
           authRepository: repository,
-          authNotifier: authNotifier,
+          authController: authController,
         ),
       ),
       GoRoute(

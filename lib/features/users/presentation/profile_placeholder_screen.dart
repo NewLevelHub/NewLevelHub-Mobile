@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
-import '../../../core/router/auth_notifier.dart';
 import '../../../core/widgets/app_empty_view.dart';
+import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/repositories/auth_repository.dart';
 import 'users_strings.dart';
 import 'view_models/profile_view_model.dart';
@@ -14,12 +14,12 @@ import 'view_models/profile_view_model.dart';
 class ProfilePlaceholderScreen extends StatefulWidget {
   const ProfilePlaceholderScreen({
     required this.authRepository,
-    required this.authNotifier,
+    required this.authController,
     super.key,
   });
 
   final AuthRepository authRepository;
-  final AuthNotifier authNotifier;
+  final AuthController authController;
 
   @override
   State<ProfilePlaceholderScreen> createState() =>
@@ -29,7 +29,7 @@ class ProfilePlaceholderScreen extends StatefulWidget {
 class _ProfilePlaceholderScreenState extends State<ProfilePlaceholderScreen> {
   late final ProfileViewModel _viewModel = ProfileViewModel(
     authRepository: widget.authRepository,
-    authNotifier: widget.authNotifier,
+    authController: widget.authController,
   );
 
   @override
