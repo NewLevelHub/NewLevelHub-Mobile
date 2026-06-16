@@ -32,4 +32,27 @@ abstract final class AuthStrings {
   static String resendCooldown(int seconds) =>
       'Попробуйте позже (через $seconds с)';
   static const backToLogin = 'Вернуться ко входу';
+
+  // Verify email link — deep link confirmation (MOB-111)
+  static const verifyLinkTitle = 'Подтверждение email';
+  static const verifyLinkSuccessTitle = 'Email подтверждён';
+  static const verifyLinkSuccessMessage =
+      'Ваш email успешно подтверждён. Теперь вы можете войти.';
+  static const verifyLinkAlreadyUsedTitle = 'Email уже подтверждён';
+  static const verifyLinkExpiredTitle = 'Ссылка истекла';
+  static const verifyLinkInvalidTitle = 'Ссылка недействительна';
+  static const verifyLinkInvalidMessage =
+      'Эта ссылка для подтверждения email недействительна. '
+      'Запросите письмо повторно или войдите, чтобы отправить новое.';
+  static const verifyLinkErrorTitle = 'Не удалось подтвердить email';
+  static const verifyLinkNoTokenMessage =
+      'В ссылке отсутствует код подтверждения.';
+  static const verifyLinkResend = 'Отправить письмо повторно';
+  static const verifyLinkResendSent = 'Письмо отправлено повторно';
+  static const verifyLinkGoToLogin = 'Войти';
+
+  // Debug-only manual deep link entry (MOB-111, kDebugMode only)
+  static const debugDeepLinkTitle = 'Debug: ввод токена';
+  static const debugDeepLinkHint = 'Токен подтверждения email';
+  static const debugDeepLinkSubmit = 'Проверить';
 }

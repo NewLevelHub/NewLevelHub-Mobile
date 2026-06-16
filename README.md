@@ -104,6 +104,44 @@ flutter test
 
 В debug-сборке на главном экране доступна кнопка **UI Kit Demo** (`/ui-kit-demo`) — демонстрирует все компоненты дизайн-системы: кнопки, поля ввода, ошибки, загрузку и пустые состояния.
 
+### Тестирование deep link (подтверждение email)
+
+Ссылка из письма подтверждения ведёт на `https://newlevelhub.kz/verify-email?token=<uuid>`. Приложение перехватывает её через `newlevelhub://verify-email?token=<uuid>` (custom scheme, работает всегда) или через App Links/Universal Links на `https://newlevelhub.kz/verify-email` (требует доменной верификации — см. ниже).
+
+**Android (custom scheme — работает в любой сборке):**
+
+```bash
+adb shell am start -W -a android.intent.action.VIEW \
+  -d "newlevelhub://verify-email?token=00000000-0000-0000-0000-000000000000" \
+  kz.newlevelhub.newlevelhub_mobile
+```
+
+**Android (App Links, `https://`):**
+
+```bash
+adb shell am start -W -a android.intent.action.VIEW \
+  -d "https://newlevelhub.kz/verify-email?token=00000000-0000-0000-0000-000000000000" \
+  kz.newlevelhub.newlevelhub_mobile
+```
+
+App Links требует, чтобы `https://newlevelhub.kz/.well-known/assetlinks.json` был опубликован на бэкенде (не входит в этот репозиторий) — без него `autoVerify` не проходит, и `https://`-ссылка может открыть выбор приложения вместо прямого перехода. Custom scheme (`newlevelhub://`) работает независимо от этого.
+
+**iOS Simulator (custom scheme):**
+
+```bash
+xcrun simctl openurl booted "newlevelhub://verify-email?token=00000000-0000-0000-0000-000000000000"
+```
+
+**iOS Simulator (Universal Links, `https://`):**
+
+```bash
+xcrun simctl openurl booted "https://newlevelhub.kz/verify-email?token=00000000-0000-0000-0000-000000000000"
+```
+
+Universal Links на iOS аналогично требуют, чтобы домен раздавал подписанный `apple-app-site-association` с путём `/verify-email`, и чтобы `ios/Runner/Runner.entitlements` (`applinks:newlevelhub.kz`) был подключён в Xcode → Signing & Capabilities → Associated Domains — это одноразовый ручной шаг в Xcode, не выполняется через `flutter` CLI.
+
+**Без реальной ссылки (debug-сборка):** на главном экране (значок 🐞) и на экране входа («Debug: токен подтверждения email», только `kDebugMode`) доступна кнопка ручного ввода токена — открывает тот же экран подтверждения, что и настоящая ссылка.
+
 ---
 
 ## Структура проекта

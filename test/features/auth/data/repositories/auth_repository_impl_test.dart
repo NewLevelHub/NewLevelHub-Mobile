@@ -118,6 +118,34 @@ void main() {
     });
   });
 
+  group('AuthRepositoryImpl.verifyEmailToken', () {
+    test('delegates to AuthService', () async {
+      final authService = _FakeAuthService();
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: TokenStorage(store: _InMemoryStore()),
+      );
+
+      await repository.verifyEmailToken('a-token');
+
+      expect(authService.verifyCalls, 1);
+      expect(authService.lastVerifiedToken, 'a-token');
+    });
+
+    test('propagates exceptions from the service', () async {
+      final authService = _FakeAuthService()..exceptionToThrow = Exception('boom');
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: TokenStorage(store: _InMemoryStore()),
+      );
+
+      await expectLater(
+        repository.verifyEmailToken('a-token'),
+        throwsException,
+      );
+    });
+  });
+
   group('AuthRepositoryImpl.logout', () {
     test('clears stored tokens', () async {
       final tokenStorage = TokenStorage(store: _InMemoryStore());
@@ -159,6 +187,8 @@ class _FakeAuthService extends AuthService {
   String? capturedPassword;
   bool? capturedRememberMe;
   int resendCalls = 0;
+  int verifyCalls = 0;
+  String? lastVerifiedToken;
 
   @override
   Future<LoginResponse> login({
@@ -180,6 +210,15 @@ class _FakeAuthService extends AuthService {
   @override
   Future<void> resendVerificationEmail() async {
     resendCalls++;
+    if (exceptionToThrow != null) {
+      throw exceptionToThrow!;
+    }
+  }
+
+  @override
+  Future<void> verifyEmail(String token) async {
+    verifyCalls++;
+    lastVerifiedToken = token;
     if (exceptionToThrow != null) {
       throw exceptionToThrow!;
     }

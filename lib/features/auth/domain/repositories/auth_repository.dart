@@ -30,6 +30,15 @@ abstract interface class AuthRepository {
   /// failures.
   Future<void> resendVerificationEmail();
 
+  /// Confirms a verification token via `GET /auth/email/verify/?token=...`
+  /// (public — no access token required).
+  ///
+  /// Throws `ApiException` with `statusCode == 404` if the token doesn't
+  /// exist, `statusCode == 400` if it was already used or has expired (see
+  /// `EmailVerifyLinkViewModel` for how these two are told apart), or
+  /// another `ApiException` on other failures.
+  Future<void> verifyEmailToken(String token);
+
   /// Clears the local session (tokens only — no server-side call yet).
   Future<void> logout();
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -5,6 +7,7 @@ import 'core/network/connectivity_probe.dart';
 import 'core/network/dio_client.dart';
 import 'core/router/app_router.dart';
 import 'core/router/auth_notifier.dart';
+import 'core/router/deep_link_listener.dart';
 import 'core/theme/app_theme.dart';
 
 class NewLevelHubApp extends StatefulWidget {
@@ -28,6 +31,7 @@ class NewLevelHubApp extends StatefulWidget {
 class _NewLevelHubAppState extends State<NewLevelHubApp> {
   late final AuthNotifier _authNotifier;
   late final GoRouter _router;
+  late final DeepLinkListener _deepLinkListener;
 
   @override
   void initState() {
@@ -42,6 +46,9 @@ class _NewLevelHubAppState extends State<NewLevelHubApp> {
 
     final client = widget.dioClient ?? DioClient.instance;
     client.onSessionExpired = _authNotifier.onSessionExpired;
+
+    _deepLinkListener = DeepLinkListener(router: _router);
+    unawaited(_deepLinkListener.init());
   }
 
   @override
@@ -49,6 +56,7 @@ class _NewLevelHubAppState extends State<NewLevelHubApp> {
     if (widget.dioClient == null) {
       DioClient.instance.onSessionExpired = () {};
     }
+    _deepLinkListener.dispose();
     _router.dispose();
     super.dispose();
   }

@@ -12,6 +12,8 @@ import '../../features/auth/data/services/auth_service.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/auth_placeholder_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/auth/presentation/views/debug_deep_link_screen.dart';
+import '../../features/auth/presentation/views/email_verify_link_screen.dart';
 import '../../features/auth/presentation/views/login_screen.dart';
 import '../../features/auth/presentation/views/verify_email_screen.dart';
 import '../../features/users/presentation/profile_placeholder_screen.dart';
@@ -83,11 +85,23 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
-        builder: (context, state) => VerifyEmailScreen(
-          email: state.uri.queryParameters['email'] ?? '',
-          authRepository: repository,
-          authNotifier: authNotifier,
-        ),
+        builder: (context, state) {
+          // Deep link landing (`?token=...`) vs. the "check your inbox"
+          // waiting screen shown right after register/login (`?email=...`)
+          // — same path, see `EmailVerifyLinkScreen` doc comment.
+          final token = state.uri.queryParameters['token'];
+          if (token != null && token.isNotEmpty) {
+            return EmailVerifyLinkScreen(
+              token: token,
+              authRepository: repository,
+            );
+          }
+          return VerifyEmailScreen(
+            email: state.uri.queryParameters['email'] ?? '',
+            authRepository: repository,
+            authNotifier: authNotifier,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.invite,
@@ -126,6 +140,10 @@ GoRouter createAppRouter({
       GoRoute(
         path: AppRoutes.uiKitDemo,
         builder: (context, state) => const UiKitDemoScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.debugVerifyEmailToken,
+        builder: (context, state) => const DebugDeepLinkScreen(),
       ),
     ],
   );

@@ -179,5 +179,8 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> resendVerificationEmail() async {}
 
   @override
+  Future<void> verifyEmailToken(String token) async {}
+
+  @override
   Future<void> logout() async {}
 }
