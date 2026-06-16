@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:newlevelhub_mobile/core/config/api_config.dart';
+import 'package:newlevelhub_mobile/core/network/auth_interceptor.dart';
 import 'package:newlevelhub_mobile/core/network/core_api.dart';
 import 'package:newlevelhub_mobile/core/network/dio_client.dart';
 import 'package:newlevelhub_mobile/core/network/interceptors/debug_log_interceptor.dart';
@@ -21,6 +22,15 @@ void main() {
       expect(dio.options.receiveTimeout, const Duration(seconds: 30));
       expect(dio.options.headers['Accept'], 'application/json');
       expect(dio.options.headers['Accept-Language'], 'ru');
+    });
+
+    test('dio registers AuthInterceptor', () {
+      final dio = DioClient.instance.dio;
+
+      expect(
+        dio.interceptors.any((interceptor) => interceptor is AuthInterceptor),
+        isTrue,
+      );
     });
   });
 
