@@ -116,6 +116,40 @@ void main() {
       );
     });
   });
+
+  group('AuthService.resendVerificationEmail', () {
+    test('posts to /auth/email/resend/ and completes on 200', () async {
+      adapter.enqueue(_jsonResponse(200, {'detail': 'Письмо отправлено'}));
+
+      await service.resendVerificationEmail();
+
+      expect(adapter.lastPath, '/api/v1/auth/email/resend/');
+    });
+
+    test('throws ApiException(403) when already verified', () async {
+      adapter.enqueue(_jsonResponse(403, {'detail': 'Email уже подтверждён'}));
+
+      await expectLater(
+        service.resendVerificationEmail(),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 403)
+              .having((e) => e.message, 'message', 'Email уже подтверждён'),
+        ),
+      );
+    });
+
+    test('throws ApiException(429) when rate-limited', () async {
+      adapter.enqueue(_jsonResponse(429, {'detail': 'Слишком много запросов.'}));
+
+      await expectLater(
+        service.resendVerificationEmail(),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 429),
+        ),
+      );
+    });
+  });
 }
 
 Map<String, dynamic> _userJson() => {

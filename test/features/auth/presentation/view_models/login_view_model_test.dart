@@ -171,4 +171,13 @@ class _FakeAuthRepository implements AuthRepository {
 
     return userToReturn!;
   }
+
+  @override
+  Future<bool> hasActiveSession() async => false;
+
+  @override
+  Future<void> resendVerificationEmail() async {}
+
+  @override
+  Future<void> logout() async {}
 }

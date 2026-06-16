@@ -13,6 +13,7 @@ import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/auth_placeholder_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/presentation/views/login_screen.dart';
+import '../../features/auth/presentation/views/verify_email_screen.dart';
 import '../../features/users/presentation/profile_placeholder_screen.dart';
 import 'app_routes.dart';
 import 'auth_notifier.dart';
@@ -82,10 +83,10 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
-        builder: (context, state) => AuthPlaceholderScreen(
-          title: 'Подтверждение email',
-          subtitle: 'Ожидание подтверждения email',
-          queryEmail: state.uri.queryParameters['email'],
+        builder: (context, state) => VerifyEmailScreen(
+          email: state.uri.queryParameters['email'] ?? '',
+          authRepository: repository,
+          authNotifier: authNotifier,
         ),
       ),
       GoRoute(

@@ -35,4 +35,14 @@ class AuthRepositoryImpl implements AuthRepository {
 
     return result.user;
   }
+
+  @override
+  Future<bool> hasActiveSession() => _tokenStorage.hasTokens();
+
+  @override
+  Future<void> resendVerificationEmail() =>
+      _authService.resendVerificationEmail();
+
+  @override
+  Future<void> logout() => _tokenStorage.clearTokens();
 }
