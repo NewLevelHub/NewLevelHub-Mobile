@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user_role.dart';
 import 'package:newlevelhub_mobile/core/network/api_exception.dart';
-import 'package:newlevelhub_mobile/core/router/auth_notifier.dart';
+import 'package:newlevelhub_mobile/features/auth/application/auth_controller.dart';
 import 'package:newlevelhub_mobile/features/auth/domain/repositories/auth_repository.dart';
 import 'package:newlevelhub_mobile/features/auth/presentation/view_models/login_submit_result.dart';
 import 'package:newlevelhub_mobile/features/auth/presentation/view_models/login_view_model.dart';
@@ -10,15 +10,15 @@ import 'package:newlevelhub_mobile/features/auth/presentation/view_models/login_
 void main() {
   group('LoginViewModel.submit', () {
     late _FakeAuthRepository repository;
-    late AuthNotifier authNotifier;
+    late AuthController authController;
     late LoginViewModel viewModel;
 
     setUp(() {
       repository = _FakeAuthRepository();
-      authNotifier = AuthNotifier();
+      authController = AuthController(authRepository: repository);
       viewModel = LoginViewModel(
         authRepository: repository,
-        authNotifier: authNotifier,
+        authController: authController,
       );
     });
 
@@ -64,8 +64,8 @@ void main() {
 
       await viewModel.submit();
 
-      expect(authNotifier.isAuthenticated, isTrue);
-      expect(authNotifier.currentUser, user);
+      expect(authController.isAuthenticated, isTrue);
+      expect(authController.currentUser, user);
     });
 
     test('returns LoginSubmitEmailNotVerified and does not authenticate', () async {
@@ -79,7 +79,7 @@ void main() {
 
       expect(result, isA<LoginSubmitEmailNotVerified>());
       expect((result as LoginSubmitEmailNotVerified).email, 'user@example.com');
-      expect(authNotifier.isAuthenticated, isFalse);
+      expect(authController.isAuthenticated, isFalse);
     });
 
     test('surfaces the backend message as errorMessage on invalid credentials (400)', () async {
@@ -94,7 +94,7 @@ void main() {
 
       expect(result, isA<LoginSubmitFailure>());
       expect(viewModel.errorMessage, 'Неверный email или пароль.');
-      expect(authNotifier.isAuthenticated, isFalse);
+      expect(authController.isAuthenticated, isFalse);
     });
 
     test('surfaces the backend message on a blocked account (403)', () async {
@@ -183,4 +183,22 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {}
+
+  @override
+  Future<User> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    required String password,
+    required String passwordConfirm,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<User> fetchMe() => throw UnimplementedError();
+
+  @override
+  Future<bool> refresh() => throw UnimplementedError();
 }

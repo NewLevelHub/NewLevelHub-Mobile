@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/router/auth_notifier.dart';
+import '../../application/auth_controller.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../auth_strings.dart';
 import 'verify_email_resend_result.dart';
@@ -17,16 +17,16 @@ import 'verify_email_resend_result.dart';
 class VerifyEmailViewModel extends ChangeNotifier {
   VerifyEmailViewModel({
     required AuthRepository authRepository,
-    required AuthNotifier authNotifier,
+    required AuthController authController,
     required String email,
     Duration rateLimitCooldown = const Duration(seconds: 60),
   })  : _authRepository = authRepository,
-        _authNotifier = authNotifier,
+        _authController = authController,
         _email = email,
         _rateLimitCooldown = rateLimitCooldown;
 
   final AuthRepository _authRepository;
-  final AuthNotifier _authNotifier;
+  final AuthController _authController;
   final String _email;
   final Duration _rateLimitCooldown;
 
@@ -104,7 +104,7 @@ class VerifyEmailViewModel extends ChangeNotifier {
   /// should navigate to `AppRoutes.login` afterwards.
   Future<void> logout() async {
     await _authRepository.logout();
-    _authNotifier.markUnauthenticated();
+    _authController.markUnauthenticated();
   }
 
   void _startCooldown() {

@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user_role.dart';
 import 'package:newlevelhub_mobile/core/network/api_exception.dart';
-import 'package:newlevelhub_mobile/core/router/auth_notifier.dart';
+import 'package:newlevelhub_mobile/features/auth/application/auth_controller.dart';
 import 'package:newlevelhub_mobile/features/auth/domain/repositories/auth_repository.dart';
 import 'package:newlevelhub_mobile/features/auth/presentation/view_models/verify_email_resend_result.dart';
 import 'package:newlevelhub_mobile/features/auth/presentation/view_models/verify_email_view_model.dart';
@@ -10,17 +10,17 @@ import 'package:newlevelhub_mobile/features/auth/presentation/view_models/verify
 void main() {
   group('VerifyEmailViewModel', () {
     late _FakeAuthRepository repository;
-    late AuthNotifier authNotifier;
+    late AuthController authController;
 
     setUp(() {
       repository = _FakeAuthRepository();
-      authNotifier = AuthNotifier();
+      authController = AuthController(authRepository: repository);
     });
 
     VerifyEmailViewModel buildViewModel({String email = 'user@example.com'}) {
       return VerifyEmailViewModel(
         authRepository: repository,
-        authNotifier: authNotifier,
+        authController: authController,
         email: email,
         rateLimitCooldown: const Duration(seconds: 30),
       );
@@ -121,12 +121,12 @@ void main() {
 
     test('logout clears the session and marks unauthenticated', () async {
       final viewModel = buildViewModel();
-      authNotifier.setAuthenticatedUser(_user());
+      authController.setAuthenticatedUser(_user());
 
       await viewModel.logout();
 
       expect(repository.logoutCalls, 1);
-      expect(authNotifier.isAuthenticated, isFalse);
+      expect(authController.isAuthenticated, isFalse);
     });
   });
 }
@@ -175,4 +175,22 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> logout() async {
     logoutCalls++;
   }
+
+  @override
+  Future<User> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    required String password,
+    required String passwordConfirm,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<User> fetchMe() => throw UnimplementedError();
+
+  @override
+  Future<bool> refresh() => throw UnimplementedError();
 }

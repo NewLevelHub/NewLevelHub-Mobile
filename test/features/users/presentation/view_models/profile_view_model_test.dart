@@ -1,21 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user.dart';
-import 'package:newlevelhub_mobile/core/router/auth_notifier.dart';
+import 'package:newlevelhub_mobile/core/auth/models/user_role.dart';
+import 'package:newlevelhub_mobile/features/auth/application/auth_controller.dart';
 import 'package:newlevelhub_mobile/features/auth/domain/repositories/auth_repository.dart';
 import 'package:newlevelhub_mobile/features/users/presentation/view_models/profile_view_model.dart';
 
 void main() {
   group('ProfileViewModel.logout', () {
     late _FakeAuthRepository repository;
-    late AuthNotifier authNotifier;
+    late AuthController authController;
     late ProfileViewModel viewModel;
 
     setUp(() {
       repository = _FakeAuthRepository();
-      authNotifier = AuthNotifier()..markAuthenticated();
+      authController = AuthController(authRepository: repository)
+        ..setAuthenticatedUser(_user());
       viewModel = ProfileViewModel(
         authRepository: repository,
-        authNotifier: authNotifier,
+        authController: authController,
       );
     });
 
@@ -30,7 +32,7 @@ void main() {
 
       await viewModel.logout();
 
-      expect(authNotifier.isAuthenticated, isFalse);
+      expect(authController.isAuthenticated, isFalse);
     });
 
     test('toggles isLoggingOut around the repository call', () async {
@@ -72,4 +74,33 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> verifyEmailToken(String token) async {}
+
+  @override
+  Future<User> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    required String password,
+    required String passwordConfirm,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<User> fetchMe() => throw UnimplementedError();
+
+  @override
+  Future<bool> refresh() => throw UnimplementedError();
 }
+
+User _user() => User(
+      id: 1,
+      email: 'user@example.com',
+      firstName: 'Анна',
+      lastName: 'Иванова',
+      fullName: 'Анна Иванова',
+      role: UserRole.employee,
+      isEmailVerified: true,
+      dateJoined: DateTime(2024, 1, 1),
+    );

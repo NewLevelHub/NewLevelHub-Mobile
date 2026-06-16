@@ -6,22 +6,24 @@ import 'package:go_router/go_router.dart';
 import 'core/network/connectivity_probe.dart';
 import 'core/network/dio_client.dart';
 import 'core/router/app_router.dart';
-import 'core/router/auth_notifier.dart';
 import 'core/router/deep_link_listener.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/application/auth_controller.dart';
+import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/auth/data/services/auth_service.dart';
 
 class NewLevelHubApp extends StatefulWidget {
   const NewLevelHubApp({
     super.key,
     this.runConnectivityProbeOnStart = true,
     this.connectivityProbe,
-    this.authNotifier,
+    this.authController,
     this.dioClient,
   });
 
   final bool runConnectivityProbeOnStart;
   final ConnectivityProbe? connectivityProbe;
-  final AuthNotifier? authNotifier;
+  final AuthController? authController;
   final DioClient? dioClient;
 
   @override
@@ -29,23 +31,29 @@ class NewLevelHubApp extends StatefulWidget {
 }
 
 class _NewLevelHubAppState extends State<NewLevelHubApp> {
-  late final AuthNotifier _authNotifier;
+  late final AuthController _authController;
   late final GoRouter _router;
   late final DeepLinkListener _deepLinkListener;
 
   @override
   void initState() {
     super.initState();
-    _authNotifier = widget.authNotifier ?? AuthNotifier();
+    _authController = widget.authController ??
+        AuthController(
+          authRepository: AuthRepositoryImpl(
+            authService: AuthService(DioClient.instance.dio),
+            tokenStorage: DioClient.instance.tokenStorage,
+          ),
+        );
     _router = createAppRouter(
-      authNotifier: _authNotifier,
+      authController: _authController,
       runConnectivityProbeOnStart: widget.runConnectivityProbeOnStart,
       connectivityProbe: widget.connectivityProbe,
     );
-    _authNotifier.attachRouter(_router);
+    _authController.attachRouter(_router);
 
     final client = widget.dioClient ?? DioClient.instance;
-    client.onSessionExpired = _authNotifier.onSessionExpired;
+    client.onSessionExpired = _authController.onSessionExpired;
 
     _deepLinkListener = DeepLinkListener(router: _router);
     unawaited(_deepLinkListener.init());

@@ -22,6 +22,8 @@ CompanyBrief _$CompanyBriefFromJson(Map<String, dynamic> json) {
 mixin _$CompanyBrief {
   int get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
+  @JsonKey(name: 'onboarding_completed')
+  bool get onboardingCompleted => throw _privateConstructorUsedError;
 
   /// Serializes this CompanyBrief to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -39,7 +41,10 @@ abstract class $CompanyBriefCopyWith<$Res> {
           CompanyBrief value, $Res Function(CompanyBrief) then) =
       _$CompanyBriefCopyWithImpl<$Res, CompanyBrief>;
   @useResult
-  $Res call({int id, String name});
+  $Res call(
+      {int id,
+      String name,
+      @JsonKey(name: 'onboarding_completed') bool onboardingCompleted});
 }
 
 /// @nodoc
@@ -59,6 +64,7 @@ class _$CompanyBriefCopyWithImpl<$Res, $Val extends CompanyBrief>
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? onboardingCompleted = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -69,6 +75,10 @@ class _$CompanyBriefCopyWithImpl<$Res, $Val extends CompanyBrief>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
+      onboardingCompleted: null == onboardingCompleted
+          ? _value.onboardingCompleted
+          : onboardingCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -81,7 +91,10 @@ abstract class _$$CompanyBriefImplCopyWith<$Res>
       __$$CompanyBriefImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String name});
+  $Res call(
+      {int id,
+      String name,
+      @JsonKey(name: 'onboarding_completed') bool onboardingCompleted});
 }
 
 /// @nodoc
@@ -99,6 +112,7 @@ class __$$CompanyBriefImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? onboardingCompleted = null,
   }) {
     return _then(_$CompanyBriefImpl(
       id: null == id
@@ -109,6 +123,10 @@ class __$$CompanyBriefImplCopyWithImpl<$Res>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
+      onboardingCompleted: null == onboardingCompleted
+          ? _value.onboardingCompleted
+          : onboardingCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -116,7 +134,11 @@ class __$$CompanyBriefImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$CompanyBriefImpl implements _CompanyBrief {
-  const _$CompanyBriefImpl({required this.id, required this.name});
+  const _$CompanyBriefImpl(
+      {required this.id,
+      required this.name,
+      @JsonKey(name: 'onboarding_completed')
+      required this.onboardingCompleted});
 
   factory _$CompanyBriefImpl.fromJson(Map<String, dynamic> json) =>
       _$$CompanyBriefImplFromJson(json);
@@ -125,10 +147,13 @@ class _$CompanyBriefImpl implements _CompanyBrief {
   final int id;
   @override
   final String name;
+  @override
+  @JsonKey(name: 'onboarding_completed')
+  final bool onboardingCompleted;
 
   @override
   String toString() {
-    return 'CompanyBrief(id: $id, name: $name)';
+    return 'CompanyBrief(id: $id, name: $name, onboardingCompleted: $onboardingCompleted)';
   }
 
   @override
@@ -137,12 +162,14 @@ class _$CompanyBriefImpl implements _CompanyBrief {
         (other.runtimeType == runtimeType &&
             other is _$CompanyBriefImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.name, name) || other.name == name));
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.onboardingCompleted, onboardingCompleted) ||
+                other.onboardingCompleted == onboardingCompleted));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name);
+  int get hashCode => Object.hash(runtimeType, id, name, onboardingCompleted);
 
   /// Create a copy of CompanyBrief
   /// with the given fields replaced by the non-null parameter values.
@@ -162,7 +189,10 @@ class _$CompanyBriefImpl implements _CompanyBrief {
 
 abstract class _CompanyBrief implements CompanyBrief {
   const factory _CompanyBrief(
-      {required final int id, required final String name}) = _$CompanyBriefImpl;
+      {required final int id,
+      required final String name,
+      @JsonKey(name: 'onboarding_completed')
+      required final bool onboardingCompleted}) = _$CompanyBriefImpl;
 
   factory _CompanyBrief.fromJson(Map<String, dynamic> json) =
       _$CompanyBriefImpl.fromJson;
@@ -171,6 +201,9 @@ abstract class _CompanyBrief implements CompanyBrief {
   int get id;
   @override
   String get name;
+  @override
+  @JsonKey(name: 'onboarding_completed')
+  bool get onboardingCompleted;
 
   /// Create a copy of CompanyBrief
   /// with the given fields replaced by the non-null parameter values.

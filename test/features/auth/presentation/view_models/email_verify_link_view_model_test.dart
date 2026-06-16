@@ -209,4 +209,22 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {}
+
+  @override
+  Future<User> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    required String password,
+    required String passwordConfirm,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<User> fetchMe() => throw UnimplementedError();
+
+  @override
+  Future<bool> refresh() => throw UnimplementedError();
 }

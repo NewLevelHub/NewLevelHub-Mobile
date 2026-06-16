@@ -14,13 +14,28 @@ class LoginResponse {
   final AuthTokens tokens;
 }
 
-/// Stateless wrapper around the shared Dio client for the login endpoint.
-/// No business logic — parses the JSON response and converts transport
-/// errors to [ApiException] via [ErrorParser].
+/// Raw response of `POST /auth/register/`: profile + JWT pair, same shape
+/// as [LoginResponse] — kept separate for call-site clarity.
+class RegisterResponse {
+  const RegisterResponse({required this.user, required this.tokens});
+
+  final User user;
+  final AuthTokens tokens;
+}
+
+/// Stateless wrapper around the shared Dio client for the auth endpoints.
+/// No business logic — parses JSON responses and converts transport errors
+/// to [ApiException] via [ErrorParser].
 class AuthService {
   AuthService(this._dio);
 
   final Dio _dio;
+
+  /// The underlying Dio client — exposed so [AuthRepositoryImpl] can build
+  /// its `TokenRefresher` against the same client without a third Dio
+  /// instance; `/auth/token/refresh/` is a public path (see
+  /// `AuthInterceptor.publicPaths`), so reusing it is safe.
+  Dio get dio => _dio;
 
   Future<LoginResponse> login({
     required String email,
@@ -42,6 +57,57 @@ class AuthService {
         user: User.fromJson(data['user'] as Map<String, dynamic>),
         tokens: AuthTokens.fromJson(data['tokens'] as Map<String, dynamic>),
       );
+    } on DioException catch (e) {
+      throw ErrorParser.parse(e);
+    }
+  }
+
+  /// `POST /auth/register/` — public registration (guest self-signup), as
+  /// opposed to `POST /auth/register/invite/` (employee onboarding via
+  /// invite token, not yet implemented client-side). Mirrors
+  /// `UserRegistrationSerializer`: `email`, `first_name`, `last_name`,
+  /// `phone` (optional), `password`, `password_confirm`. Issues tokens
+  /// immediately (201), unlike invite-register.
+  Future<RegisterResponse> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    String? phone,
+    required String password,
+    required String passwordConfirm,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/register/',
+        data: <String, dynamic>{
+          'email': email,
+          'first_name': firstName,
+          'last_name': lastName,
+          if (phone != null) 'phone': phone,
+          'password': password,
+          'password_confirm': passwordConfirm,
+        },
+      );
+
+      final data = response.data!;
+      return RegisterResponse(
+        user: User.fromJson(data['user'] as Map<String, dynamic>),
+        tokens: AuthTokens.fromJson(data['tokens'] as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      throw ErrorParser.parse(e);
+    }
+  }
+
+  /// `GET /auth/me/` — current profile, the same `UserProfileSerializer`
+  /// payload embedded in login/register responses. Requires a Bearer access
+  /// token, attached automatically by `AuthInterceptor`; a 401 here triggers
+  /// the interceptor's own refresh-then-retry, so by the time this throws,
+  /// refresh has already been attempted and failed.
+  Future<User> fetchMe() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/auth/me/');
+      return User.fromJson(response.data!);
     } on DioException catch (e) {
       throw ErrorParser.parse(e);
     }

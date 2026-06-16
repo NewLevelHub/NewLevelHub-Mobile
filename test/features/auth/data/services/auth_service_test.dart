@@ -117,6 +117,120 @@ void main() {
     });
   });
 
+  group('AuthService.register', () {
+    test('parses user + tokens from a 201 response', () async {
+      adapter.enqueue(_jsonResponse(201, {
+        'user': _userJson(),
+        'tokens': {'access': 'access-jwt', 'refresh': 'refresh-jwt'},
+      }));
+
+      final result = await service.register(
+        email: 'new@example.com',
+        firstName: 'Анна',
+        lastName: 'Иванова',
+        password: 'SecurePass123!',
+        passwordConfirm: 'SecurePass123!',
+      );
+
+      expect(result.user.email, 'user@example.com');
+      expect(result.tokens.access, 'access-jwt');
+      expect(result.tokens.refresh, 'refresh-jwt');
+    });
+
+    test('posts to /auth/register/ with the registration fields', () async {
+      adapter.enqueue(_jsonResponse(201, {
+        'user': _userJson(),
+        'tokens': {'access': 'a', 'refresh': 'r'},
+      }));
+
+      await service.register(
+        email: 'new@example.com',
+        firstName: 'Анна',
+        lastName: 'Иванова',
+        phone: '+77001234567',
+        password: 'SecurePass123!',
+        passwordConfirm: 'SecurePass123!',
+      );
+
+      expect(adapter.lastPath, '/api/v1/auth/register/');
+      expect(adapter.lastBody, {
+        'email': 'new@example.com',
+        'first_name': 'Анна',
+        'last_name': 'Иванова',
+        'phone': '+77001234567',
+        'password': 'SecurePass123!',
+        'password_confirm': 'SecurePass123!',
+      });
+    });
+
+    test('throws ApiException with field errors on validation failure (400)', () async {
+      adapter.enqueue(_jsonResponse(400, {
+        'success': false,
+        'error': {
+          'code': 'VALIDATION_ERROR',
+          'message': 'Ошибка валидации',
+          'details': {
+            'email': ['Пользователь с этим email уже зарегистрирован.'],
+          },
+        },
+      }));
+
+      await expectLater(
+        service.register(
+          email: 'taken@example.com',
+          firstName: 'Анна',
+          lastName: 'Иванова',
+          password: 'SecurePass123!',
+          passwordConfirm: 'SecurePass123!',
+        ),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.fieldError('email'),
+            'fieldError(email)',
+            'Пользователь с этим email уже зарегистрирован.',
+          ),
+        ),
+      );
+    });
+  });
+
+  group('AuthService.fetchMe', () {
+    test('parses the profile from a 200 response', () async {
+      adapter.enqueue(_jsonResponse(200, _userJson()));
+
+      final user = await service.fetchMe();
+
+      expect(user.email, 'user@example.com');
+      expect(user.role, UserRole.employee);
+    });
+
+    test('gets /auth/me/', () async {
+      adapter.enqueue(_jsonResponse(200, _userJson()));
+
+      await service.fetchMe();
+
+      expect(adapter.lastPath, '/api/v1/auth/me/');
+    });
+
+    test('throws ApiException(401) when unauthenticated', () async {
+      adapter.enqueue(_jsonResponse(401, {
+        'success': false,
+        'error': {
+          'code': 'UNAUTHENTICATED',
+          'message': 'Требуется авторизация',
+          'details': {},
+        },
+      }));
+
+      await expectLater(
+        service.fetchMe(),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+    });
+  });
+
   group('AuthService.resendVerificationEmail', () {
     test('posts to /auth/email/resend/ and completes on 200', () async {
       adapter.enqueue(_jsonResponse(200, {'detail': 'Письмо отправлено'}));
@@ -240,7 +354,7 @@ Map<String, dynamic> _userJson() => {
       'position': null,
       'avatar': null,
       'role': 'employee',
-      'company': {'id': 10, 'name': 'Acme'},
+      'company': {'id': 10, 'name': 'Acme', 'onboarding_completed': true},
       'is_email_verified': true,
       'date_joined': '2024-01-01T00:00:00Z',
     };
