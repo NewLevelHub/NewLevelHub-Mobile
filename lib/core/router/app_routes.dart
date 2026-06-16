@@ -9,6 +9,7 @@ abstract final class AppRoutes {
   static const resetPassword = '/reset-password';
   static const home = '/home';
   static const profile = '/profile';
+  static const uiKitDemo = '/ui-kit-demo';
 
   /// Routes that require an authenticated session.
   static const authRequired = <String>{home, profile};

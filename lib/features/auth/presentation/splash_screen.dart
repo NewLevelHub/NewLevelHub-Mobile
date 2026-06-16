@@ -6,6 +6,9 @@ import '../../../core/auth/token_storage.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/router/auth_notifier.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_loader.dart';
 
 /// Validates stored tokens on cold start and routes to auth or main flow.
 class SplashScreen extends StatefulWidget {
@@ -63,28 +66,26 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.apartment_outlined,
-              size: 72,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              AppConfig.appName,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.apartment_outlined,
+                size: 72,
+                color: AppColors.primary,
               ),
-            ),
-            const SizedBox(height: 32),
-            const CircularProgressIndicator(),
-          ],
+              const SizedBox(height: 24),
+              Text(
+                AppConfig.appName,
+                style: AppTextStyles.display(context),
+              ),
+              const SizedBox(height: 32),
+              const AppLoader(),
+            ],
+          ),
         ),
       ),
     );

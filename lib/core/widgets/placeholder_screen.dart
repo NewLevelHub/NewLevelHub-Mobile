@@ -1,8 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../config/app_config.dart';
 import '../network/connectivity_probe.dart';
+import '../router/app_routes.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
+import '../widgets/app_button.dart';
+import '../widgets/app_error_view.dart';
 
 /// Temporary home screen until feature modules are implemented.
 class PlaceholderScreen extends StatefulWidget {
@@ -23,6 +29,7 @@ class _PlaceholderScreenState extends State<PlaceholderScreen> {
   late final ConnectivityProbe _probe =
       widget.connectivityProbe ?? ConnectivityProbe();
   bool _isChecking = false;
+  ConnectivityProbeResult? _lastResult;
 
   @override
   void initState() {
@@ -39,11 +46,16 @@ class _PlaceholderScreenState extends State<PlaceholderScreen> {
     final result = await _probe.run();
 
     if (!mounted) return;
-    setState(() => _isChecking = false);
+    setState(() {
+      _isChecking = false;
+      _lastResult = result;
+    });
     _showProbeResult(result);
   }
 
   void _showProbeResult(ConnectivityProbeResult result) {
+    if (result is ConnectivityProbePingFailed) return;
+
     final messenger = ScaffoldMessenger.of(context);
 
     switch (result) {
@@ -66,24 +78,25 @@ class _PlaceholderScreenState extends State<PlaceholderScreen> {
           ),
         );
       case ConnectivityProbePingFailed():
-        if (kDebugMode) {
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text('Не удалось связаться с API'),
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
+        break;
     }
   }
 
+  bool get _hasNetworkError => _lastResult is ConnectivityProbePingFailed;
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppConfig.appName),
+        actions: [
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.palette_outlined),
+              tooltip: 'UI Kit Demo',
+              onPressed: () => context.push(AppRoutes.uiKitDemo),
+            ),
+        ],
       ),
       floatingActionButton: kDebugMode
           ? FloatingActionButton.extended(
@@ -98,36 +111,47 @@ class _PlaceholderScreenState extends State<PlaceholderScreen> {
               label: const Text('Проверить API'),
             )
           : null,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.apartment_outlined,
-                size: 72,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                AppConfig.appName,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+      body: SafeArea(
+        child: _hasNetworkError
+            ? AppErrorView(
+                message: 'Не удалось связаться с сервером.\nПроверьте подключение.',
+                onRetry: _runConnectivityProbe,
+              )
+            : Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.apartment_outlined,
+                        size: 72,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        AppConfig.appName,
+                        style: AppTextStyles.display(context),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Мобильное приложение в разработке',
+                        style: AppTextStyles.bodySecondary(context),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (kDebugMode) ...[
+                        const SizedBox(height: 32),
+                        AppButton(
+                          label: 'UI Kit Demo',
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => context.push(AppRoutes.uiKitDemo),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Мобильное приложение в разработке',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

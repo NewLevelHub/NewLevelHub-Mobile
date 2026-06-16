@@ -6,6 +6,7 @@ import '../auth/token_storage.dart';
 import '../network/connectivity_probe.dart';
 import '../network/dio_client.dart';
 import '../widgets/placeholder_screen.dart';
+import '../widgets/ui_kit_demo_screen.dart';
 import '../../features/auth/presentation/auth_placeholder_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/users/presentation/profile_placeholder_screen.dart';
@@ -60,6 +61,7 @@ GoRouter createAppRouter({
         builder: (context, state) => const AuthPlaceholderScreen(
           title: 'Вход',
           subtitle: 'Экран входа в разработке',
+          showFormDemo: true,
         ),
       ),
       GoRoute(
@@ -109,6 +111,10 @@ GoRouter createAppRouter({
       GoRoute(
         path: AppRoutes.profile,
         builder: (context, state) => const ProfilePlaceholderScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.uiKitDemo,
+        builder: (context, state) => const UiKitDemoScreen(),
       ),
     ],
   );
