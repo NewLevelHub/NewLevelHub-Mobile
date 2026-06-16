@@ -126,7 +126,7 @@ class _PlaceholderScreenState extends State<PlaceholderScreen> {
                       const Icon(
                         Icons.apartment_outlined,
                         size: 72,
-                        color: AppColors.primary,
+                        color: AppColors.brand,
                       ),
                       const SizedBox(height: 24),
                       Text(

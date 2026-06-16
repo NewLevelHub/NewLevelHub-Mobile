@@ -65,7 +65,7 @@ class _AuthPlaceholderScreenState extends State<AuthPlaceholderScreen> {
               const Icon(
                 Icons.lock_outline,
                 size: 64,
-                color: AppColors.primary,
+                color: AppColors.brand,
               ),
               const SizedBox(height: 24),
               Text(

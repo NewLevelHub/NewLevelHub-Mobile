@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
 
 /// Inline banner for general form / API errors (shown above the form).
 class AppErrorBanner extends StatelessWidget {
@@ -17,7 +18,7 @@ class AppErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.errorBackground,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
