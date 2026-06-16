@@ -66,6 +66,72 @@ void main() {
       expect(await tokenStorage.hasTokens(), isFalse);
     });
   });
+
+  group('AuthRepositoryImpl.hasActiveSession', () {
+    late TokenStorage tokenStorage;
+    late AuthRepositoryImpl repository;
+
+    setUp(() {
+      tokenStorage = TokenStorage(store: _InMemoryStore());
+      repository = AuthRepositoryImpl(
+        authService: _FakeAuthService(),
+        tokenStorage: tokenStorage,
+      );
+    });
+
+    test('is false with no stored tokens', () async {
+      expect(await repository.hasActiveSession(), isFalse);
+    });
+
+    test('is true once tokens are persisted', () async {
+      await tokenStorage.saveTokens(access: 'a', refresh: 'r');
+
+      expect(await repository.hasActiveSession(), isTrue);
+    });
+  });
+
+  group('AuthRepositoryImpl.resendVerificationEmail', () {
+    test('delegates to AuthService', () async {
+      final authService = _FakeAuthService();
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: TokenStorage(store: _InMemoryStore()),
+      );
+
+      await repository.resendVerificationEmail();
+
+      expect(authService.resendCalls, 1);
+    });
+
+    test('propagates exceptions from the service', () async {
+      final authService = _FakeAuthService()
+        ..exceptionToThrow = Exception('boom');
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: TokenStorage(store: _InMemoryStore()),
+      );
+
+      await expectLater(
+        repository.resendVerificationEmail(),
+        throwsException,
+      );
+    });
+  });
+
+  group('AuthRepositoryImpl.logout', () {
+    test('clears stored tokens', () async {
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      await tokenStorage.saveTokens(access: 'a', refresh: 'r');
+      final repository = AuthRepositoryImpl(
+        authService: _FakeAuthService(),
+        tokenStorage: tokenStorage,
+      );
+
+      await repository.logout();
+
+      expect(await tokenStorage.hasTokens(), isFalse);
+    });
+  });
 }
 
 class _FakeAuthService extends AuthService {
@@ -92,6 +158,7 @@ class _FakeAuthService extends AuthService {
   String? capturedEmail;
   String? capturedPassword;
   bool? capturedRememberMe;
+  int resendCalls = 0;
 
   @override
   Future<LoginResponse> login({
@@ -108,6 +175,14 @@ class _FakeAuthService extends AuthService {
     }
 
     return LoginResponse(user: userToReturn, tokens: tokensToReturn);
+  }
+
+  @override
+  Future<void> resendVerificationEmail() async {
+    resendCalls++;
+    if (exceptionToThrow != null) {
+      throw exceptionToThrow!;
+    }
   }
 }
 

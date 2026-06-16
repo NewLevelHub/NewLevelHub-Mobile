@@ -46,4 +46,15 @@ class AuthService {
       throw ErrorParser.parse(e);
     }
   }
+
+  /// `POST /auth/email/resend/` — requires a Bearer access token, attached
+  /// automatically by `AuthInterceptor`. Response body is a `{detail}`
+  /// message on success; only the status matters to the caller.
+  Future<void> resendVerificationEmail() async {
+    try {
+      await _dio.post<Map<String, dynamic>>('/auth/email/resend/');
+    } on DioException catch (e) {
+      throw ErrorParser.parse(e);
+    }
+  }
 }

@@ -17,4 +17,19 @@ abstract final class AuthStrings {
   static const noAccount = 'Регистрация';
   static const signIn = 'Войти';
   static const signInLoading = 'Вход…';
+
+  // Verify email (MOB-110)
+  static const verifyEmailTitle = 'Подтверждение email';
+  static const verifyEmailInstructions =
+      'Мы отправили письмо со ссылкой для подтверждения на адрес ниже. '
+      'Перейдите по ссылке из письма, чтобы продолжить.';
+  static const verifyEmailInviteInstructions =
+      'Проверьте почту — мы отправили письмо со ссылкой для подтверждения.';
+  static const resendEmail = 'Отправить письмо повторно';
+  static const resendEmailLoading = 'Отправляем…';
+  static const resendEmailSent = 'Письмо отправлено повторно';
+  static const resendEmailAlreadyVerified = 'Email уже подтверждён';
+  static String resendCooldown(int seconds) =>
+      'Попробуйте позже (через $seconds с)';
+  static const backToLogin = 'Вернуться ко входу';
 }

@@ -14,4 +14,22 @@ abstract interface class AuthRepository {
     required String password,
     required bool rememberMe,
   });
+
+  /// `true` when a local access token exists — i.e. the user just went
+  /// through `register`/`login` and can call Bearer-authenticated
+  /// endpoints. `false` after `register-by-invite` (no tokens are issued)
+  /// or once tokens have been cleared by [logout].
+  Future<bool> hasActiveSession();
+
+  /// Resends the verification email via `POST /auth/email/resend/`
+  /// (requires an access token — see [hasActiveSession]).
+  ///
+  /// Throws `ApiException` with `statusCode == 403` if the email is
+  /// already verified, `statusCode == 429` if the resend rate limit (3
+  /// requests / 10 min) was hit, or another `ApiException` on other
+  /// failures.
+  Future<void> resendVerificationEmail();
+
+  /// Clears the local session (tokens only — no server-side call yet).
+  Future<void> logout();
 }
