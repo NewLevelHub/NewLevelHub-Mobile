@@ -56,6 +56,19 @@ void main() {
       expect(viewModel.result, isA<EmailVerifyLinkInvalid>());
     });
 
+    test('maps 400 VALIDATION_ERROR (malformed, non-UUID token) to EmailVerifyLinkInvalid', () async {
+      repository.exceptionToThrow = const ApiException(
+        code: 'VALIDATION_ERROR',
+        message: 'Must be a valid UUID.',
+        statusCode: 400,
+      );
+      final viewModel = buildViewModel();
+
+      await viewModel.verify();
+
+      expect(viewModel.result, isA<EmailVerifyLinkInvalid>());
+    });
+
     test('maps the backend\'s plain 400 "already used" message to EmailVerifyLinkAlreadyUsed', () async {
       repository.exceptionToThrow = const ApiException(
         message: 'Токен уже использован.',

@@ -21,8 +21,9 @@ final class EmailVerifyLinkExpired extends EmailVerifyLinkResult {
   const EmailVerifyLinkExpired();
 }
 
-/// 404 — the token doesn't exist (malformed/garbled link, or already
-/// deleted). Shown as a generic "invalid link" message.
+/// 404 (token doesn't exist) or 400 `VALIDATION_ERROR` (token isn't even a
+/// valid UUID — a garbled/truncated link). Both render as a generic
+/// "invalid link" message rather than the raw backend text.
 final class EmailVerifyLinkInvalid extends EmailVerifyLinkResult {
   const EmailVerifyLinkInvalid();
 }

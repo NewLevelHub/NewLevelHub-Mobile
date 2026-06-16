@@ -79,6 +79,16 @@ class EmailVerifyLinkViewModel extends ChangeNotifier {
       return const EmailVerifyLinkInvalid();
     }
     if (e.statusCode == 400) {
+      // Malformed token (not a UUID at all — a garbled/truncated link).
+      // `EmailVerifySerializer.token` rejects it before the lookup even
+      // happens, so this goes through the proper `{success, error}`
+      // envelope with `code: VALIDATION_ERROR` — but the message itself is
+      // DRF's untranslated field error ("Must be a valid UUID."), which
+      // isn't something to show a Russian-speaking user. Treat it the same
+      // as "link doesn't exist".
+      if (e.code == 'VALIDATION_ERROR') {
+        return const EmailVerifyLinkInvalid();
+      }
       if (e.message == _alreadyUsedMessage) {
         return const EmailVerifyLinkAlreadyUsed();
       }
