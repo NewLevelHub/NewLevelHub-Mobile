@@ -39,6 +39,9 @@ abstract interface class AuthRepository {
   /// another `ApiException` on other failures.
   Future<void> verifyEmailToken(String token);
 
-  /// Clears the local session (tokens only — no server-side call yet).
+  /// Logs out: best-effort `POST /auth/logout/` to blacklist the refresh
+  /// token server-side, then **always** clears the local session — even on
+  /// a network failure or a 400 (refresh missing/already invalid). Callers
+  /// should treat this as infallible and proceed straight to navigation.
   Future<void> logout();
 }

@@ -48,5 +48,16 @@ class AuthRepositoryImpl implements AuthRepository {
       _authService.verifyEmail(token);
 
   @override
-  Future<void> logout() => _tokenStorage.clearTokens();
+  Future<void> logout() async {
+    final refresh = await _tokenStorage.getRefreshToken();
+    if (refresh != null && refresh.isNotEmpty) {
+      try {
+        await _authService.logout(refresh);
+      } catch (_) {
+        // Best-effort: a network failure or an already-invalid refresh
+        // token (400) must not block the local session teardown below.
+      }
+    }
+    await _tokenStorage.clearTokens();
+  }
 }

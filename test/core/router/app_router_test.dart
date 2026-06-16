@@ -65,6 +65,20 @@ void main() {
       expect(authNotifier.isAuthenticated, isTrue);
     });
 
+    testWidgets('the profile icon on home navigates to /profile', (tester) async {
+      tokenStorage.hasTokensResult = true;
+      authApi.validateSessionResult = true;
+
+      await tester.pumpWidget(buildTestApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Профиль'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Профиль'), findsWidgets);
+      expect(find.text('Выйти'), findsOneWidget);
+    });
+
     testWidgets('redirects to login when session is invalid', (tester) async {
       tokenStorage.hasTokensResult = true;
       authApi.validateSessionResult = false;

@@ -77,4 +77,23 @@ class AuthService {
       throw ErrorParser.parse(e);
     }
   }
+
+  /// `POST /auth/logout/` — public, no Bearer required (see
+  /// `AuthInterceptor.publicPaths`); blacklists [refreshToken] server-side.
+  /// Response body is a `{detail}` message on success.
+  ///
+  /// Throws `ApiException` with `statusCode == 400` if [refreshToken] is
+  /// missing or already invalid — see `AuthRepositoryImpl.logout`, which
+  /// treats this call as best-effort and always clears local tokens
+  /// regardless of the outcome.
+  Future<void> logout(String refreshToken) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/auth/logout/',
+        data: <String, dynamic>{'refresh': refreshToken},
+      );
+    } on DioException catch (e) {
+      throw ErrorParser.parse(e);
+    }
+  }
 }

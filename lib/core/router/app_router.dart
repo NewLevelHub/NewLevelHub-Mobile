@@ -135,7 +135,10 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: AppRoutes.profile,
-        builder: (context, state) => const ProfilePlaceholderScreen(),
+        builder: (context, state) => ProfilePlaceholderScreen(
+          authRepository: repository,
+          authNotifier: authNotifier,
+        ),
       ),
       GoRoute(
         path: AppRoutes.uiKitDemo,
