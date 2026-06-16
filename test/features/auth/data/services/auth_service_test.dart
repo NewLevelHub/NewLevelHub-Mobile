@@ -204,6 +204,30 @@ void main() {
       );
     });
   });
+
+  group('AuthService.logout', () {
+    test('posts to /auth/logout/ with the refresh token and completes on 200', () async {
+      adapter.enqueue(_jsonResponse(200, {'detail': 'Вы успешно вышли из системы'}));
+
+      await service.logout('refresh-jwt');
+
+      expect(adapter.lastPath, '/api/v1/auth/logout/');
+      expect(adapter.lastBody, {'refresh': 'refresh-jwt'});
+    });
+
+    test('throws ApiException(400) with the plain detail message on invalid refresh', () async {
+      adapter.enqueue(_jsonResponse(400, {'detail': 'Refresh-токен обязателен'}));
+
+      await expectLater(
+        service.logout('bad-token'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having((e) => e.message, 'message', 'Refresh-токен обязателен'),
+        ),
+      );
+    });
+  });
 }
 
 Map<String, dynamic> _userJson() => {

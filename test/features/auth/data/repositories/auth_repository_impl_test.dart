@@ -4,6 +4,7 @@ import 'package:newlevelhub_mobile/core/auth/models/auth_tokens.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user.dart';
 import 'package:newlevelhub_mobile/core/auth/models/user_role.dart';
 import 'package:newlevelhub_mobile/core/auth/token_storage.dart';
+import 'package:newlevelhub_mobile/core/network/api_exception.dart';
 import 'package:newlevelhub_mobile/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:newlevelhub_mobile/features/auth/data/services/auth_service.dart';
 
@@ -159,6 +160,66 @@ void main() {
 
       expect(await tokenStorage.hasTokens(), isFalse);
     });
+
+    test('calls AuthService.logout with the stored refresh token', () async {
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      await tokenStorage.saveTokens(access: 'a', refresh: 'stored-refresh');
+      final authService = _FakeAuthService();
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: tokenStorage,
+      );
+
+      await repository.logout();
+
+      expect(authService.logoutCalls, 1);
+      expect(authService.lastLogoutRefresh, 'stored-refresh');
+    });
+
+    test('clears tokens even when the server call fails (network error)', () async {
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      await tokenStorage.saveTokens(access: 'a', refresh: 'r');
+      final authService = _FakeAuthService()
+        ..exceptionToThrow = Exception('network down');
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: tokenStorage,
+      );
+
+      await repository.logout();
+
+      expect(await tokenStorage.hasTokens(), isFalse);
+    });
+
+    test('clears tokens even when the server rejects an invalid refresh (400)', () async {
+      final tokenStorage = TokenStorage(store: _InMemoryStore());
+      await tokenStorage.saveTokens(access: 'a', refresh: 'r');
+      final authService = _FakeAuthService()
+        ..exceptionToThrow = const ApiException(
+          message: 'Refresh-токен обязателен',
+          statusCode: 400,
+        );
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: tokenStorage,
+      );
+
+      await repository.logout();
+
+      expect(await tokenStorage.hasTokens(), isFalse);
+    });
+
+    test('does not call the server when there is no stored refresh token', () async {
+      final authService = _FakeAuthService();
+      final repository = AuthRepositoryImpl(
+        authService: authService,
+        tokenStorage: TokenStorage(store: _InMemoryStore()),
+      );
+
+      await repository.logout();
+
+      expect(authService.logoutCalls, 0);
+    });
   });
 }
 
@@ -189,6 +250,8 @@ class _FakeAuthService extends AuthService {
   int resendCalls = 0;
   int verifyCalls = 0;
   String? lastVerifiedToken;
+  int logoutCalls = 0;
+  String? lastLogoutRefresh;
 
   @override
   Future<LoginResponse> login({
@@ -219,6 +282,15 @@ class _FakeAuthService extends AuthService {
   Future<void> verifyEmail(String token) async {
     verifyCalls++;
     lastVerifiedToken = token;
+    if (exceptionToThrow != null) {
+      throw exceptionToThrow!;
+    }
+  }
+
+  @override
+  Future<void> logout(String refreshToken) async {
+    logoutCalls++;
+    lastLogoutRefresh = refreshToken;
     if (exceptionToThrow != null) {
       throw exceptionToThrow!;
     }

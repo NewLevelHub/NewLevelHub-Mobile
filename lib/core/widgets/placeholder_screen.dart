@@ -90,6 +90,11 @@ class _PlaceholderScreenState extends State<PlaceholderScreen> {
       appBar: AppBar(
         title: const Text(AppConfig.appName),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Профиль',
+            onPressed: () => context.go(AppRoutes.profile),
+          ),
           if (kDebugMode) ...[
             IconButton(
               icon: const Icon(Icons.palette_outlined),
