@@ -12,6 +12,12 @@
 .swiftpm/
 migrate_working_dir/
 
+# Windows OS junk
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
 # IntelliJ related
 *.iml
 *.ipr
